@@ -1,3 +1,15 @@
+# KatKat-UI
+
+## Docker ile çalıştırma
+
+```
+docker compose up -d --build
+```
+
+KatKat backend'i (bkz. o repodaki `docker-compose.yml`, `http://localhost:8080` üzerinde) zaten ayaktaysa, bu komut arayüzü `http://localhost:3000` üzerinde nginx ile servis eder ve doğrudan o backend'e bağlanır (`.env.docker`). Domain/port değişirse tek değiştirilecek yer `.env.docker` dosyasıdır.
+
+---
+
 # React + TypeScript + Vite
 
 This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
