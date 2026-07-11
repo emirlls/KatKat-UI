@@ -6,14 +6,22 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
+    "build:docker": "tsc -b && vite build --mode docker",
     "lint": "oxlint",
     "preview": "vite preview"
   },
   "dependencies": {
+    "@microsoft/signalr": "^10.0.0",
+    "axios": "^1.18.1",
+    "jwt-decode": "^4.0.0",
+    "leaflet": "^1.9.4",
     "react": "^19.2.7",
-    "react-dom": "^19.2.7"
+    "react-dom": "^19.2.7",
+    "react-leaflet": "^5.0.0",
+    "react-router-dom": "^7.18.1"
   },
   "devDependencies": {
+    "@types/leaflet": "^1.9.21",
     "@types/node": "^24.13.2",
     "@types/react": "^19.2.17",
     "@types/react-dom": "^19.2.3",
