@@ -13,13 +13,18 @@ import { FlatMemberRoleLabels } from '../../../types/enums';
 import { flatService } from '../services/flatService';
 
 function FlatMembers({ flatId, refreshKey }: { flatId: string; refreshKey: number }) {
-  const { data: members, error, loading } = useAsync(() => flatService.listMembersByFlat(flatId), [flatId, refreshKey]);
+  const [localRefreshKey, setLocalRefreshKey] = useState(0);
+  const { data: members, error, loading } = useAsync(
+    () => flatService.listMembersByFlat(flatId),
+    [flatId, refreshKey, localRefreshKey],
+  );
   const [actionError, setActionError] = useState<string | null>(null);
 
   async function runAction(action: () => Promise<unknown>) {
     setActionError(null);
     try {
       await action();
+      setLocalRefreshKey((k) => k + 1);
     } catch (err) {
       setActionError(err instanceof ApiError ? err.message : 'İşlem başarısız.');
     }
@@ -35,7 +40,7 @@ function FlatMembers({ flatId, refreshKey }: { flatId: string; refreshKey: numbe
       {members.map((member) => (
         <div key={member.id} className="row">
           <Badge>{FlatMemberRoleLabels[member.role]}</Badge>
-          <span>{member.userId}</span>
+          <span>{member.userName}</span>
           {member.role === 0 && (
             <Button size="sm" variant="secondary" onClick={() => runAction(() => flatService.approve(member.id))}>
               Onayla

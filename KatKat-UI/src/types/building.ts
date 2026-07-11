@@ -13,6 +13,11 @@ export interface CreateBuildingDto {
   floorCount?: number;
 }
 
+export interface UpdateBuildingDto {
+  name: string;
+  floorCount?: number;
+}
+
 export interface FlatDto extends FullAuditedEntityDto<string> {
   buildingId: string;
   flatNumber: string;
@@ -36,6 +41,7 @@ export interface UpdateFlatDto {
 export interface FlatMemberDto extends FullAuditedEntityDto<string> {
   flatId: string;
   userId: string;
+  userName: string;
   role: FlatMemberRole;
 }
 

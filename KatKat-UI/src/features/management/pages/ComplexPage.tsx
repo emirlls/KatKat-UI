@@ -40,10 +40,20 @@ export function ComplexPage() {
     data: complex,
     error: complexError,
     loading: complexLoading,
-  } = useAsync(
-    () => (activeComplexId ? complexService.get(activeComplexId) : Promise.resolve(null)),
-    [activeComplexId, refreshKey],
-  );
+  } = useAsync(async () => {
+    if (!activeComplexId) return null;
+    try {
+      return await complexService.get(activeComplexId);
+    } catch (err) {
+      // A stale/deleted active Complex reference shouldn't surface as a dead-end error - drop it
+      // and let the user pick again from the search results below.
+      if (err instanceof ApiError && err.status === 404) {
+        setActiveComplex(null);
+        return null;
+      }
+      throw err;
+    }
+  }, [activeComplexId, refreshKey]);
 
   const [isEditing, setIsEditing] = useState(false);
   const [editForm, setEditForm] = useState(() => (complex ? complexFormFromDto(complex) : null));

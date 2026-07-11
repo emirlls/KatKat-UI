@@ -68,13 +68,21 @@ function NeighborhoodTab() {
 }
 
 function NearbyTab() {
-  const { activeComplexId } = useActiveComplex();
+  const { activeComplexId, setActiveComplex } = useActiveComplex();
   const [radiusKm, setRadiusKm] = useState(DEFAULT_RADIUS_KM);
 
-  const { data: activeComplex } = useAsync(
-    () => (activeComplexId ? complexService.get(activeComplexId) : Promise.resolve(null)),
-    [activeComplexId],
-  );
+  const { data: activeComplex } = useAsync(async () => {
+    if (!activeComplexId) return null;
+    try {
+      return await complexService.get(activeComplexId);
+    } catch (err) {
+      if (err instanceof ApiError && err.status === 404) {
+        setActiveComplex(null);
+        return null;
+      }
+      throw err;
+    }
+  }, [activeComplexId]);
 
   const center: [number, number] = activeComplex ? [activeComplex.latitude, activeComplex.longitude] : DEFAULT_CENTER;
 

@@ -3,6 +3,7 @@ import type { CreateFlatDto, FlatDto, FlatMemberDto, InviteFlatMemberDto, Update
 
 export const flatService = {
   listByBuilding: (buildingId: string) => api.get<FlatDto[]>('/flats', { buildingId }),
+  getMyFlats: (complexId: string) => api.get<FlatDto[]>('/flats/my', { complexId }),
   create: (input: CreateFlatDto) => api.post<FlatDto>('/flats', input),
   update: (id: string, input: UpdateFlatDto) => api.put<FlatDto>(`/flats/${id}`, input),
   delete: (id: string) => api.delete<void>(`/flats/${id}`),
