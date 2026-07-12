@@ -24,3 +24,7 @@ export const apiRoutePrefix = '/api/katkat';
 export function apiUrl(path: string): string {
   return `${appConfig.apiBaseUrl}${apiRoutePrefix}${path}`;
 }
+
+// ABP's own endpoint (NOT under the /api/katkat module prefix) that returns the current user's
+// granted permission policies - the "genel yetki apisi" the whole permission-driven UI reads from.
+export const abpApplicationConfigurationUrl = `${appConfig.apiBaseUrl}/api/abp/application-configuration`;

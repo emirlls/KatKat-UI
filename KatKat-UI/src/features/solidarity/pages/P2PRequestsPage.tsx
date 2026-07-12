@@ -23,6 +23,7 @@ export function P2PRequestsPage() {
   const bump = useCallback(() => setRefreshKey((k) => k + 1), []);
   useHubEvent<P2PRequestDto>(KatKatHubEvents.P2PRequestCreated, bump);
   useHubEvent<P2PRequestDto>(KatKatHubEvents.P2PRequestFulfilled, bump);
+  useHubEvent<P2PRequestDto>(KatKatHubEvents.P2PRequestCancelled, bump);
 
   const {
     data: requests,

@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react';
+import { useCallback, useState, type FormEvent } from 'react';
 import { Badge } from '../../../components/Badge';
 import { Button } from '../../../components/Button';
 import { Card } from '../../../components/Card';
@@ -9,13 +9,26 @@ import { Spinner } from '../../../components/Spinner';
 import { Textarea } from '../../../components/Textarea';
 import { useActiveComplex } from '../../../context/ActiveComplexContext';
 import { useAsync } from '../../../hooks/useAsync';
+import { usePermission } from '../../../hooks/usePermission';
+import { useComplexGroup, useHubEvent } from '../../../hooks/useSignalR';
 import { ApiError } from '../../../services/api';
+import { KatKatHubEvents } from '../../../services/signalr-service';
 import { IssueStatusLabels } from '../../../types/enums';
+import { Permissions } from '../../../types/permissions';
 import { issueService } from '../services/issueService';
 
 export function IssuesPage() {
   const { activeComplexId } = useActiveComplex();
+  const { hasPermission } = usePermission();
+  const canResolve = hasPermission(Permissions.Issues.Resolve);
   const [refreshKey, setRefreshKey] = useState(0);
+
+  // A reported/updated fault shows up live for everyone in the complex.
+  useComplexGroup(activeComplexId ?? undefined);
+  const bump = useCallback(() => setRefreshKey((k) => k + 1), []);
+  useHubEvent(KatKatHubEvents.IssueCreated, bump);
+  useHubEvent(KatKatHubEvents.IssueInProgress, bump);
+  useHubEvent(KatKatHubEvents.IssueResolved, bump);
 
   const {
     data: issues,
@@ -101,18 +114,20 @@ export function IssuesPage() {
                 {IssueStatusLabels[issue.statuses]}
               </Badge>
             </div>
-            <div className="row">
-              {issue.statuses === 0 && (
-                <Button size="sm" variant="secondary" onClick={() => handleStartProgress(issue.id)}>
-                  İşleme Al
-                </Button>
-              )}
-              {issue.statuses === 1 && (
-                <Button size="sm" variant="secondary" onClick={() => handleResolve(issue.id)}>
-                  Çözüldü
-                </Button>
-              )}
-            </div>
+            {canResolve && (
+              <div className="row">
+                {issue.statuses === 0 && (
+                  <Button size="sm" variant="secondary" onClick={() => handleStartProgress(issue.id)}>
+                    İşleme Al
+                  </Button>
+                )}
+                {issue.statuses === 1 && (
+                  <Button size="sm" variant="secondary" onClick={() => handleResolve(issue.id)}>
+                    Çözüldü
+                  </Button>
+                )}
+              </div>
+            )}
           </Card>
         ))}
       </div>

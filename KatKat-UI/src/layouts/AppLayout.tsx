@@ -2,32 +2,47 @@ import { NavLink, Outlet } from 'react-router-dom';
 import { Button } from '../components/Button';
 import { useActiveComplex } from '../context/ActiveComplexContext';
 import { useAuth } from '../hooks/useAuth';
+import { usePermission } from '../hooks/usePermission';
+import { Permissions } from '../types/permissions';
 import './layouts.css';
 
-const NAV_ITEMS = [
+interface NavItem {
+  to: string;
+  label: string;
+  end?: boolean;
+  /** Shown only if the user holds this permission (managers/admin). Omit for everyone. */
+  permission?: string;
+  /** Shown only to the host "admin" superuser. */
+  adminOnly?: boolean;
+}
+
+// One nav list for everyone; visibility is decided per item by permission/role so each role sees
+// exactly the pages it can use. Admin holds every permission, so it sees the whole list.
+const NAV_ITEMS: NavItem[] = [
   { to: '/', label: 'Panel', end: true },
   { to: '/leaderboard', label: 'Liderlik Tablosu' },
-  { to: '/complexes', label: 'Sitem' },
-  { to: '/buildings', label: 'Bloklar & Daireler' },
+  { to: '/complexes', label: 'Sitem', permission: Permissions.Complexes.Create },
+  { to: '/buildings', label: 'Bloklar & Daireler', permission: Permissions.Buildings.Create },
   { to: '/expenses', label: 'Giderler' },
   { to: '/issues', label: 'Arızalar' },
   { to: '/p2p-requests', label: 'Komşu Talepleri' },
   { to: '/reservations', label: 'Rezervasyonlar' },
   { to: '/sos', label: 'SOS' },
   { to: '/preferences', label: 'Bildirim Ayarları' },
+  { to: '/admin/managers', label: 'Yöneticiler', adminOnly: true },
 ];
-
-// Admin is a host-level superuser with no site of their own - their only job here is
-// provisioning Managers, so they get a dedicated nav instead of a mostly-empty version of
-// everyone else's site-scoped pages.
-const ADMIN_NAV_ITEMS = [{ to: '/admin/managers', label: 'Yöneticiler', end: false }];
 
 export function AppLayout() {
   const { user, logout } = useAuth();
+  const { hasPermission } = usePermission();
   const { activeComplexId, activeComplexName } = useActiveComplex();
   const isAdmin = user?.roles.includes('admin') ?? false;
 
-  const navItems = isAdmin ? ADMIN_NAV_ITEMS : NAV_ITEMS;
+  const navItems = NAV_ITEMS.filter((item) => {
+    if (item.adminOnly) return isAdmin;
+    if (item.permission) return hasPermission(item.permission);
+    return true;
+  });
 
   return (
     <div className="app-shell">
@@ -46,10 +61,10 @@ export function AppLayout() {
       </nav>
       <div className="app-main">
         <header className="app-header">
-          {!isAdmin && (
-            <span className="badge">
-              {activeComplexId ? `Site: ${activeComplexName ?? activeComplexId}` : 'Henüz bir site oluşturulmadı'}
-            </span>
+          {activeComplexId ? (
+            <span className="badge">Site: {activeComplexName ?? activeComplexId}</span>
+          ) : (
+            !isAdmin && <span className="badge">Henüz bir site oluşturulmadı</span>
           )}
           <div className="row">
             <span>{user?.userName}</span>

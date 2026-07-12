@@ -15,7 +15,9 @@ import { P2PRequestsPage } from '../features/solidarity/pages/P2PRequestsPage';
 import { AppLayout } from '../layouts/AppLayout';
 import { DashboardPage } from '../pages/DashboardPage';
 import { NotFoundPage } from '../pages/NotFoundPage';
+import { Permissions } from '../types/permissions';
 import { AdminRoute } from './AdminRoute';
+import { PermissionRoute } from './PermissionRoute';
 import { ProtectedRoute } from './ProtectedRoute';
 
 export function AppRoutes() {
@@ -28,9 +30,14 @@ export function AppRoutes() {
         <Route element={<AppLayout />}>
           <Route path="/" element={<DashboardPage />} />
           <Route path="/leaderboard" element={<LeaderboardPage />} />
-          <Route path="/complexes" element={<ComplexPage />} />
-          <Route path="/buildings" element={<BuildingsPage />} />
-          <Route path="/buildings/:buildingId/flats" element={<FlatsPage />} />
+          {/* Site management is manager-only; a resident deep-linking these is redirected home. */}
+          <Route element={<PermissionRoute permission={Permissions.Complexes.Create} />}>
+            <Route path="/complexes" element={<ComplexPage />} />
+          </Route>
+          <Route element={<PermissionRoute permission={Permissions.Buildings.Create} />}>
+            <Route path="/buildings" element={<BuildingsPage />} />
+            <Route path="/buildings/:buildingId/flats" element={<FlatsPage />} />
+          </Route>
           <Route path="/expenses" element={<ExpensesPage />} />
           <Route path="/issues" element={<IssuesPage />} />
           <Route path="/p2p-requests" element={<P2PRequestsPage />} />
