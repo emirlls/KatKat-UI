@@ -8,12 +8,6 @@ export interface AccessTokenClaims {
   sub: string;
   preferred_username?: string;
   role?: string | string[];
+  tenantid?: string;
   exp: number;
-}
-
-export interface RegisterDto {
-  userName: string;
-  email: string;
-  password: string;
-  isManager: boolean;
 }

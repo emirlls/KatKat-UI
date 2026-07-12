@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react';
-import { Link, Navigate, useLocation } from 'react-router-dom';
+import { Navigate, useLocation } from 'react-router-dom';
 import { Button } from '../../../components/Button';
 import { ErrorBanner } from '../../../components/ErrorBanner';
 import { Input } from '../../../components/Input';
@@ -54,9 +54,6 @@ export function LoginPage() {
         <Button type="submit" disabled={isSubmitting}>
           {isSubmitting ? 'Giriş yapılıyor…' : 'Giriş Yap'}
         </Button>
-        <p>
-          Hesabın yok mu? <Link to="/register">Kayıt Ol</Link>
-        </p>
       </form>
     </AuthLayout>
   );

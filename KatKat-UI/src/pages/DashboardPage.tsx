@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom';
+import { Link, Navigate } from 'react-router-dom';
 import { Card } from '../components/Card';
 import { useActiveComplex } from '../context/ActiveComplexContext';
 import { useAuth } from '../hooks/useAuth';
@@ -17,6 +17,10 @@ export function DashboardPage() {
   const { user } = useAuth();
   const { activeComplexId } = useActiveComplex();
 
+  if (user?.roles.includes('admin')) {
+    return <Navigate to="/admin/managers" replace />;
+  }
+
   return (
     <div className="page stack">
       <div className="page-header">
@@ -25,8 +29,7 @@ export function DashboardPage() {
       {!activeComplexId && (
         <Card>
           <p>
-            Henüz aktif bir site seçmedin. Başlamak için <Link to="/complexes">Siteler</Link> sayfasından bir site
-            seç ya da yeni bir site oluştur.
+            Henüz bir site oluşturmadın. Başlamak için <Link to="/complexes">Sitem</Link> sayfasından siteni oluştur.
           </p>
         </Card>
       )}

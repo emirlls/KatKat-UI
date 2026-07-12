@@ -12,6 +12,7 @@ export interface SearchComplexParams {
 
 export const complexService = {
   get: (id: string) => api.get<ComplexDto>(`/complexes/${id}`),
+  getMy: () => api.get<ComplexDto | null>('/complexes/my'),
   search: (params: SearchComplexParams) => api.get<ComplexDto[]>('/complexes', params),
   create: (input: CreateComplexDto) => api.post<ComplexDto>('/complexes', input),
   update: (id: string, input: UpdateComplexDto) => api.put<ComplexDto>(`/complexes/${id}`, input),

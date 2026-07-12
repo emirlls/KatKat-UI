@@ -1,6 +1,7 @@
 import { Navigate, Route, Routes } from 'react-router-dom';
+import { ManagersPage } from '../features/admin/pages/ManagersPage';
+import { InviteRedemptionPage } from '../features/auth/pages/InviteRedemptionPage';
 import { LoginPage } from '../features/auth/pages/LoginPage';
-import { RegisterPage } from '../features/auth/pages/RegisterPage';
 import { SosPage } from '../features/emergency/pages/SosPage';
 import { LeaderboardPage } from '../features/gamification/pages/LeaderboardPage';
 import { BuildingsPage } from '../features/management/pages/BuildingsPage';
@@ -14,13 +15,14 @@ import { P2PRequestsPage } from '../features/solidarity/pages/P2PRequestsPage';
 import { AppLayout } from '../layouts/AppLayout';
 import { DashboardPage } from '../pages/DashboardPage';
 import { NotFoundPage } from '../pages/NotFoundPage';
+import { AdminRoute } from './AdminRoute';
 import { ProtectedRoute } from './ProtectedRoute';
 
 export function AppRoutes() {
   return (
     <Routes>
       <Route path="/login" element={<LoginPage />} />
-      <Route path="/register" element={<RegisterPage />} />
+      <Route path="/invite/:code" element={<InviteRedemptionPage />} />
 
       <Route element={<ProtectedRoute />}>
         <Route element={<AppLayout />}>
@@ -35,6 +37,9 @@ export function AppRoutes() {
           <Route path="/reservations" element={<ReservationsPage />} />
           <Route path="/sos" element={<SosPage />} />
           <Route path="/preferences" element={<PreferencesPage />} />
+          <Route element={<AdminRoute />}>
+            <Route path="/admin/managers" element={<ManagersPage />} />
+          </Route>
         </Route>
       </Route>
 

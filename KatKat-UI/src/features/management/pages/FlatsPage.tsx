@@ -9,8 +9,12 @@ import { Input } from '../../../components/Input';
 import { Spinner } from '../../../components/Spinner';
 import { useAsync } from '../../../hooks/useAsync';
 import { ApiError } from '../../../services/api';
+import type { UpdateResidentInfoDto } from '../../../types/building';
 import { FlatMemberRoleLabels } from '../../../types/enums';
 import { flatService } from '../services/flatService';
+import { residentInvitationService } from '../services/residentInvitationService';
+
+const EMPTY_RESIDENT_INFO_FORM: UpdateResidentInfoDto = { userName: '', email: '', phoneNumber: '' };
 
 function FlatMembers({ flatId, refreshKey }: { flatId: string; refreshKey: number }) {
   const [localRefreshKey, setLocalRefreshKey] = useState(0);
@@ -19,6 +23,9 @@ function FlatMembers({ flatId, refreshKey }: { flatId: string; refreshKey: numbe
     [flatId, refreshKey, localRefreshKey],
   );
   const [actionError, setActionError] = useState<string | null>(null);
+  const [editingMemberId, setEditingMemberId] = useState<string | null>(null);
+  const [residentInfoForm, setResidentInfoForm] = useState<UpdateResidentInfoDto>(EMPTY_RESIDENT_INFO_FORM);
+  const [residentInfoError, setResidentInfoError] = useState<string | null>(null);
 
   async function runAction(action: () => Promise<unknown>) {
     setActionError(null);
@@ -30,6 +37,35 @@ function FlatMembers({ flatId, refreshKey }: { flatId: string; refreshKey: numbe
     }
   }
 
+  async function handleRemove(memberId: string, memberName: string) {
+    if (!window.confirm(`"${memberName}" adlı sakini bu daireden çıkarmak istediğinize emin misiniz?`)) return;
+    await runAction(() => flatService.removeMember(memberId));
+  }
+
+  async function startEditResidentInfo(memberId: string) {
+    setResidentInfoError(null);
+    try {
+      const info = await flatService.getResidentInfo(memberId);
+      setResidentInfoForm(info);
+      setEditingMemberId(memberId);
+    } catch (err) {
+      setActionError(err instanceof ApiError ? err.message : 'Sakin bilgisi alınamadı.');
+    }
+  }
+
+  async function handleSaveResidentInfo(event: FormEvent) {
+    event.preventDefault();
+    if (!editingMemberId) return;
+    setResidentInfoError(null);
+    try {
+      await flatService.updateResidentInfo(editingMemberId, residentInfoForm);
+      setEditingMemberId(null);
+      setLocalRefreshKey((k) => k + 1);
+    } catch (err) {
+      setResidentInfoError(err instanceof ApiError ? err.message : 'Sakin bilgisi güncellenemedi.');
+    }
+  }
+
   if (loading) return <Spinner />;
   if (error) return <ErrorBanner message={error} />;
   if (!members || members.length === 0) return <EmptyState message="Bu dairede henüz sakin yok." />;
@@ -37,26 +73,65 @@ function FlatMembers({ flatId, refreshKey }: { flatId: string; refreshKey: numbe
   return (
     <div className="stack">
       {actionError && <ErrorBanner message={actionError} />}
-      {members.map((member) => (
-        <div key={member.id} className="row">
-          <Badge>{FlatMemberRoleLabels[member.role]}</Badge>
-          <span>{member.userName}</span>
-          {member.role === 0 && (
-            <Button size="sm" variant="secondary" onClick={() => runAction(() => flatService.approve(member.id))}>
-              Onayla
+      {members.map((member) =>
+        editingMemberId === member.id ? (
+          <form key={member.id} className="stack" onSubmit={handleSaveResidentInfo}>
+            {residentInfoError && <ErrorBanner message={residentInfoError} />}
+            <div className="row">
+              <Input
+                placeholder="Kullanıcı Adı"
+                value={residentInfoForm.userName}
+                onChange={(e) => setResidentInfoForm({ ...residentInfoForm, userName: e.target.value })}
+                required
+              />
+              <Input
+                placeholder="E-posta"
+                type="email"
+                value={residentInfoForm.email}
+                onChange={(e) => setResidentInfoForm({ ...residentInfoForm, email: e.target.value })}
+                required
+              />
+              <Input
+                placeholder="Telefon"
+                value={residentInfoForm.phoneNumber}
+                onChange={(e) => setResidentInfoForm({ ...residentInfoForm, phoneNumber: e.target.value })}
+                required
+              />
+            </div>
+            <div className="row">
+              <Button type="submit">Kaydet</Button>
+              <Button type="button" variant="secondary" onClick={() => setEditingMemberId(null)}>
+                Vazgeç
+              </Button>
+            </div>
+          </form>
+        ) : (
+          <div key={member.id} className="row">
+            <Badge>{FlatMemberRoleLabels[member.role]}</Badge>
+            <span>{member.userName}</span>
+            {member.role === 0 && (
+              <Button size="sm" variant="secondary" onClick={() => runAction(() => flatService.approve(member.id))}>
+                Onayla
+              </Button>
+            )}
+            {member.role === 1 && (
+              <Button
+                size="sm"
+                variant="secondary"
+                onClick={() => runAction(() => flatService.promoteToManager(member.id))}
+              >
+                Yönetici Yap
+              </Button>
+            )}
+            <Button size="sm" variant="secondary" onClick={() => startEditResidentInfo(member.id)}>
+              Bilgilerini Düzenle
             </Button>
-          )}
-          {member.role === 1 && (
-            <Button
-              size="sm"
-              variant="secondary"
-              onClick={() => runAction(() => flatService.promoteToManager(member.id))}
-            >
-              Yönetici Yap
+            <Button size="sm" variant="danger" onClick={() => handleRemove(member.id, member.userName)}>
+              Çıkar
             </Button>
-          )}
-        </div>
-      ))}
+          </div>
+        ),
+      )}
     </div>
   );
 }
@@ -68,6 +143,8 @@ export function FlatsPage() {
   const [editingFlatId, setEditingFlatId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState({ flatNumber: '', floorNumber: '', shareFactor: '1' });
   const [editError, setEditError] = useState<string | null>(null);
+  const [inviteLinksByFlatId, setInviteLinksByFlatId] = useState<Record<string, string>>({});
+  const [inviteErrorsByFlatId, setInviteErrorsByFlatId] = useState<Record<string, string>>({});
 
   const {
     data: flats,
@@ -149,6 +226,20 @@ export function FlatsPage() {
     }
   }
 
+  async function handleCreateInvite(flatId: string) {
+    setInviteErrorsByFlatId((prev) => ({ ...prev, [flatId]: '' }));
+    try {
+      const invitation = await residentInvitationService.create({ flatId });
+      const link = `${window.location.origin}/invite/${invitation.code}`;
+      setInviteLinksByFlatId((prev) => ({ ...prev, [flatId]: link }));
+    } catch (err) {
+      setInviteErrorsByFlatId((prev) => ({
+        ...prev,
+        [flatId]: err instanceof ApiError ? err.message : 'Davet oluşturulamadı.',
+      }));
+    }
+  }
+
   return (
     <div className="page stack">
       <div className="page-header">
@@ -218,6 +309,9 @@ export function FlatsPage() {
                   {flat.floorNumber != null && <span> — Kat {flat.floorNumber}</span>}
                 </div>
                 <div className="row">
+                  <Button size="sm" variant="secondary" onClick={() => handleCreateInvite(flat.id)}>
+                    Sakin Davet Et
+                  </Button>
                   <Button size="sm" variant="secondary" onClick={() => handleJoin(flat.id)}>
                     Bu Daireye Katıl
                   </Button>
@@ -235,6 +329,19 @@ export function FlatsPage() {
                     Sil
                   </Button>
                 </div>
+              </div>
+            )}
+            {inviteErrorsByFlatId[flat.id] && <ErrorBanner message={inviteErrorsByFlatId[flat.id]} />}
+            {inviteLinksByFlatId[flat.id] && (
+              <div className="row">
+                <Input value={inviteLinksByFlatId[flat.id]} readOnly onFocus={(e) => e.target.select()} />
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  onClick={() => navigator.clipboard.writeText(inviteLinksByFlatId[flat.id])}
+                >
+                  Kopyala
+                </Button>
               </div>
             )}
             {expandedFlatId === flat.id && <FlatMembers flatId={flat.id} refreshKey={refreshKey} />}
