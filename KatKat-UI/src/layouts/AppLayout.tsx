@@ -30,6 +30,7 @@ const NAV_ITEMS: NavItem[] = [
   { to: '/sos', label: 'SOS' },
   { to: '/preferences', label: 'Bildirim Ayarları' },
   { to: '/admin/managers', label: 'Yöneticiler', adminOnly: true },
+  { to: '/admin/sites', label: 'Tüm Siteler', adminOnly: true },
 ];
 
 export function AppLayout() {

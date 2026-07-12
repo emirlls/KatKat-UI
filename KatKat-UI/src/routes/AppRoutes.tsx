@@ -1,4 +1,5 @@
 import { Navigate, Route, Routes } from 'react-router-dom';
+import { AllSitesPage } from '../features/admin/pages/AllSitesPage';
 import { ManagersPage } from '../features/admin/pages/ManagersPage';
 import { InviteRedemptionPage } from '../features/auth/pages/InviteRedemptionPage';
 import { LoginPage } from '../features/auth/pages/LoginPage';
@@ -46,6 +47,7 @@ export function AppRoutes() {
           <Route path="/preferences" element={<PreferencesPage />} />
           <Route element={<AdminRoute />}>
             <Route path="/admin/managers" element={<ManagersPage />} />
+            <Route path="/admin/sites" element={<AllSitesPage />} />
           </Route>
         </Route>
       </Route>

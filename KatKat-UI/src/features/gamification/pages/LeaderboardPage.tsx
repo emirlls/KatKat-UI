@@ -6,6 +6,7 @@ import { ErrorBanner } from '../../../components/ErrorBanner';
 import { Spinner } from '../../../components/Spinner';
 import { useActiveComplex } from '../../../context/ActiveComplexContext';
 import { useAsync } from '../../../hooks/useAsync';
+import { useDebouncedValue } from '../../../hooks/useDebouncedValue';
 import { ApiError } from '../../../services/api';
 import { complexService } from '../../management/services/complexService';
 import { LeaderboardTable } from '../components/LeaderboardTable';
@@ -14,6 +15,7 @@ import { leaderboardService } from '../services/leaderboardService';
 
 const DEFAULT_CENTER: [number, number] = [41.0082, 28.9784]; // İstanbul
 const DEFAULT_RADIUS_KM = 5;
+const RADIUS_DEBOUNCE_MS = 400;
 
 type Tab = 'overall' | 'district' | 'neighborhood' | 'nearby';
 
@@ -85,10 +87,13 @@ function NearbyTab() {
   }, [activeComplexId]);
 
   const center: [number, number] = activeComplex ? [activeComplex.latitude, activeComplex.longitude] : DEFAULT_CENTER;
+  // Dragging the slider fires onChange on every tick; debounce so it settles into ONE request
+  // per pause instead of one per pixel (which otherwise trips the per-endpoint rate limit).
+  const debouncedRadiusKm = useDebouncedValue(radiusKm, RADIUS_DEBOUNCE_MS);
 
   const { data, error, loading } = useAsync(
-    () => leaderboardService.getNearbyLeaderboard(center[0], center[1], radiusKm),
-    [center[0], center[1], radiusKm],
+    () => leaderboardService.getNearbyLeaderboard(center[0], center[1], debouncedRadiusKm),
+    [center[0], center[1], debouncedRadiusKm],
   );
 
   return (

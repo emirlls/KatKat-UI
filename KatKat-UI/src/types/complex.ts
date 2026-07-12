@@ -57,3 +57,9 @@ export interface NeighborhoodLeaderboardDto {
   neighborhood: LookupDto;
   entries: LeaderboardDto[];
 }
+
+/** Admin-only cross-tenant view of a Complex - the same fields, plus the owning Tenant id. */
+export interface AdminComplexListItemDto {
+  complex: ComplexDto;
+  tenantId?: string;
+}
