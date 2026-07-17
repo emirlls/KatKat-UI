@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from 'react';
+import { Badge } from '../../../components/Badge';
 import { Button } from '../../../components/Button';
 import { Card } from '../../../components/Card';
 import { EmptyState } from '../../../components/EmptyState';
@@ -40,6 +41,37 @@ function ManagerRow({ manager, onSaved }: { manager: ManagerListItemDto; onSaved
       setError(err instanceof ApiError ? err.message : 'Yönetici güncellenemedi.');
     } finally {
       setIsSaving(false);
+    }
+  }
+
+  async function handleDelete() {
+    if (
+      !window.confirm(
+        `"${manager.userName}" yöneticisini silmek istediğinize emin misiniz? Bu işlem yöneticinin kiracısını ve içindeki tüm kullanıcıları (sakinler dahil) kalıcı olarak siler.`,
+      )
+    )
+      return;
+    try {
+      await managerService.delete(manager.tenantId);
+      onSaved();
+    } catch (err) {
+      window.alert(err instanceof ApiError ? err.message : 'Yönetici silinemedi.');
+    }
+  }
+
+  async function handleToggleActive() {
+    if (
+      manager.isActive &&
+      !window.confirm(
+        `"${manager.userName}" yöneticisini pasifleştirmek istediğinize emin misiniz? Bu işlem yöneticinin ve kiracısındaki tüm kullanıcıların giriş yapmasını engeller.`,
+      )
+    )
+      return;
+    try {
+      await managerService.setActive(manager.tenantId, !manager.isActive);
+      onSaved();
+    } catch (err) {
+      window.alert(err instanceof ApiError ? err.message : 'Yönetici durumu güncellenemedi.');
     }
   }
 
@@ -87,7 +119,8 @@ function ManagerRow({ manager, onSaved }: { manager: ManagerListItemDto; onSaved
   return (
     <tr>
       <td>
-        <strong>{manager.userName}</strong>
+        <strong>{manager.userName}</strong>{' '}
+        <Badge tone={manager.isActive ? 'success' : 'danger'}>{manager.isActive ? 'Aktif' : 'Pasif'}</Badge>
         <div>{manager.email}</div>
         {manager.phoneNumber && <div>{manager.phoneNumber}</div>}
       </td>
@@ -98,9 +131,17 @@ function ManagerRow({ manager, onSaved }: { manager: ManagerListItemDto; onSaved
           : '-'}
       </td>
       <td>
-        <Button size="sm" variant="secondary" onClick={startEdit}>
-          Düzenle
-        </Button>
+        <div className="row">
+          <Button size="sm" variant="secondary" onClick={startEdit}>
+            Düzenle
+          </Button>
+          <Button size="sm" variant="secondary" onClick={handleToggleActive}>
+            {manager.isActive ? 'Pasifleştir' : 'Aktifleştir'}
+          </Button>
+          <Button size="sm" variant="danger" onClick={handleDelete}>
+            Sil
+          </Button>
+        </div>
       </td>
     </tr>
   );
@@ -131,6 +172,11 @@ export function ManagersPage() {
       }),
     [locationFilter.cityId, locationFilter.districtId, locationFilter.neighborhoodId, debouncedNameFilter, refreshKey],
   );
+
+  function handleResetFilter() {
+    setNameFilter('');
+    setLocationFilter(EMPTY_LOCATION_FILTER);
+  }
 
   async function handleCreate(event: FormEvent) {
     event.preventDefault();
@@ -200,6 +246,9 @@ export function ManagersPage() {
         <h2>Yöneticiler</h2>
         <div className="row">
           <Input placeholder="İsim veya e-posta ara" value={nameFilter} onChange={(e) => setNameFilter(e.target.value)} />
+          <Button size="sm" variant="secondary" onClick={handleResetFilter}>
+            Filtreyi Sıfırla
+          </Button>
         </div>
         <LocationFilter value={locationFilter} onChange={setLocationFilter} />
 

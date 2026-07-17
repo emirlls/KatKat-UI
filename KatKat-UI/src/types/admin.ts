@@ -19,6 +19,7 @@ export interface ManagerListItemDto {
   userName: string;
   email: string;
   phoneNumber?: string;
+  isActive: boolean;
   complexId?: string;
   complexName?: string;
   city?: LookupDto;

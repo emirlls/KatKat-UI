@@ -15,4 +15,7 @@ export const managerService = {
   list: (params: ManagerSearchParams) => api.get<ManagerListItemDto[]>('/account/managers', params),
   update: (tenantId: string, input: UpdateManagerDto) =>
     api.put<ManagerListItemDto>(`/account/managers/${tenantId}`, input),
+  setActive: (tenantId: string, isActive: boolean) =>
+    api.put<ManagerListItemDto>(`/account/managers/${tenantId}/active`, undefined, { isActive }),
+  delete: (tenantId: string) => api.delete<void>(`/account/managers/${tenantId}`),
 };

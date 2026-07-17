@@ -8,19 +8,9 @@ import { Spinner } from '../../../components/Spinner';
 import { useActiveComplex } from '../../../context/ActiveComplexContext';
 import { useAsync } from '../../../hooks/useAsync';
 import { ApiError } from '../../../services/api';
-import type { ComplexDto } from '../../../types/complex';
 import { NeighborhoodPicker } from '../components/NeighborhoodPicker';
 import { complexService } from '../services/complexService';
-
-function complexFormFromDto(complex: ComplexDto) {
-  return {
-    name: complex.name,
-    neighborhoodId: complex.neighborhood.id as number | null,
-    address: complex.address ?? '',
-    latitude: String(complex.latitude),
-    longitude: String(complex.longitude),
-  };
-}
+import { complexFormFromDto } from '../utils/complexForm';
 
 export function ComplexPage() {
   const { activeComplexId, setActiveComplex } = useActiveComplex();
