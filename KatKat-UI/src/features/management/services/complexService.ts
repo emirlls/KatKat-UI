@@ -3,7 +3,6 @@ import type {
   AdminComplexListItemDto,
   AdminSiteDetailDto,
   ComplexDto,
-  CreateComplexDto,
   ExtendComplexSubscriptionDto,
   UpdateComplexDto,
 } from '../../../types/complex';
@@ -23,7 +22,6 @@ export const complexService = {
   search: (params: SearchComplexParams) => api.get<ComplexDto[]>('/complexes', params),
   searchAcrossAllTenants: (params: SearchComplexParams) =>
     api.get<AdminComplexListItemDto[]>('/complexes/admin/all', params),
-  create: (input: CreateComplexDto) => api.post<ComplexDto>('/complexes', input),
   update: (id: string, input: UpdateComplexDto) => api.put<ComplexDto>(`/complexes/${id}`, input),
   delete: (id: string) => api.delete<void>(`/complexes/${id}`),
   updateAcrossAllTenants: (id: string, input: UpdateComplexDto) =>

@@ -1,6 +1,6 @@
 import 'leaflet/dist/leaflet.css';
 import { useEffect } from 'react';
-import { CircleMarker, MapContainer, Popup, TileLayer, useMap } from 'react-leaflet';
+import { CircleMarker, MapContainer, Popup, TileLayer, Tooltip, useMap } from 'react-leaflet';
 import type { LeaderboardDto } from '../../../types/complex';
 
 function scoreColor(score: number): string {
@@ -65,6 +65,9 @@ export function NearbyMap({ center, entries, selfComplex }: NearbyMapProps) {
               weight: isSelf ? 3 : 1,
             }}
           >
+            <Tooltip permanent direction="top" offset={[0, -8]} className="map-score-badge">
+              {entry.score.toFixed(0)}
+            </Tooltip>
             <Popup>
               <strong>{entry.complexName}</strong> {isSelf && '(sizin siteniz)'}
               <br />

@@ -20,14 +20,21 @@ const RADIUS_DEBOUNCE_MS = 400;
 type Tab = 'overall' | 'district' | 'neighborhood' | 'nearby';
 
 const TABS: { key: Tab; label: string }[] = [
-  { key: 'overall', label: 'Genel' },
+  { key: 'overall', label: 'Şehrim' },
   { key: 'district', label: 'İlçe Bazlı' },
   { key: 'neighborhood', label: 'Mahalle Bazlı' },
   { key: 'nearby', label: 'Yakınımdakiler (Harita)' },
 ];
 
 function OverallTab() {
-  const { data, error, loading } = useAsync(() => leaderboardService.getLeaderboard(), []);
+  const { activeComplexCityId } = useActiveComplex();
+  const { data, error, loading } = useAsync(
+    () => (activeComplexCityId ? leaderboardService.getLeaderboard(activeComplexCityId) : Promise.resolve(null)),
+    [activeComplexCityId],
+  );
+  if (!activeComplexCityId) {
+    return <EmptyState message="Bu liderlik tablosunu görebilmek için bir siteniz olmalı." />;
+  }
   if (loading) return <Spinner />;
   if (error) return <ErrorBanner message={error} />;
   return <LeaderboardTable entries={data ?? []} />;

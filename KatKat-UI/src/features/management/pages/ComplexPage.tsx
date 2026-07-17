@@ -35,42 +35,6 @@ export function ComplexPage() {
     setEditForm(complex ? complexFormFromDto(complex) : null);
   }, [complex]);
 
-  const [createForm, setCreateForm] = useState({
-    name: '',
-    neighborhoodId: null as number | null,
-    address: '',
-    latitude: '',
-    longitude: '',
-    subscriptionStartDate: new Date().toISOString().slice(0, 10),
-  });
-  const [createError, setCreateError] = useState<string | null>(null);
-  const [isCreating, setIsCreating] = useState(false);
-
-  async function handleCreate(event: FormEvent) {
-    event.preventDefault();
-    setCreateError(null);
-    if (!createForm.neighborhoodId) {
-      setCreateError('Lütfen il / ilçe / mahalle seçin.');
-      return;
-    }
-    setIsCreating(true);
-    try {
-      const created = await complexService.create({
-        name: createForm.name,
-        neighborhoodId: createForm.neighborhoodId,
-        address: createForm.address || undefined,
-        latitude: Number(createForm.latitude),
-        longitude: Number(createForm.longitude),
-        subscriptionStartDate: createForm.subscriptionStartDate,
-      });
-      setActiveComplex(created.id, created.name);
-    } catch (err) {
-      setCreateError(err instanceof ApiError ? err.message : 'Site oluşturulamadı.');
-    } finally {
-      setIsCreating(false);
-    }
-  }
-
   async function handleSaveEdit(event: FormEvent) {
     event.preventDefault();
     if (!activeComplexId || !editForm?.neighborhoodId) return;
@@ -84,7 +48,7 @@ export function ComplexPage() {
         latitude: Number(editForm.latitude),
         longitude: Number(editForm.longitude),
       });
-      setActiveComplex(updated.id, updated.name);
+      setActiveComplex(updated.id, updated.name, updated.city.id);
       setIsEditing(false);
       setRefreshKey((k) => k + 1);
     } catch (err) {
@@ -216,55 +180,11 @@ export function ComplexPage() {
 
       {!activeComplexId && (
         <Card className="stack">
-          <h2>Sitenizi Oluşturun</h2>
-          <form className="stack" onSubmit={handleCreate}>
-            {createError && <ErrorBanner message={createError} />}
-            <Input
-              label="Site Adı"
-              value={createForm.name}
-              onChange={(e) => setCreateForm({ ...createForm, name: e.target.value })}
-              required
-            />
-            <NeighborhoodPicker
-              neighborhoodId={createForm.neighborhoodId}
-              onChange={(neighborhoodId) => setCreateForm({ ...createForm, neighborhoodId })}
-            />
-            <Input
-              label="Adres"
-              value={createForm.address}
-              onChange={(e) => setCreateForm({ ...createForm, address: e.target.value })}
-            />
-            <div className="row">
-              <Input
-                label="Enlem (Latitude)"
-                type="number"
-                step="any"
-                value={createForm.latitude}
-                onChange={(e) => setCreateForm({ ...createForm, latitude: e.target.value })}
-                required
-              />
-              <Input
-                label="Boylam (Longitude)"
-                type="number"
-                step="any"
-                value={createForm.longitude}
-                onChange={(e) => setCreateForm({ ...createForm, longitude: e.target.value })}
-                required
-              />
-            </div>
-            <Input
-              label="Abonelik Başlangıç Tarihi"
-              type="date"
-              value={createForm.subscriptionStartDate}
-              onChange={(e) => setCreateForm({ ...createForm, subscriptionStartDate: e.target.value })}
-              required
-            />
-            <div>
-              <Button type="submit" disabled={isCreating}>
-                {isCreating ? 'Oluşturuluyor…' : 'Site Oluştur'}
-              </Button>
-            </div>
-          </form>
+          <h2>Siteniz Bulunamadı</h2>
+          <p>
+            Bir sitenin oluşturulması yalnızca admin tarafından, yönetici hesabınızla birlikte yapılır. Sitenizin
+            oluşturulması için lütfen sizi hesabınızı oluşturan admin ile iletişime geçin.
+          </p>
         </Card>
       )}
     </div>

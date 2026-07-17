@@ -21,7 +21,7 @@ interface NavItem {
 const NAV_ITEMS: NavItem[] = [
   { to: '/', label: 'Panel', end: true },
   { to: '/leaderboard', label: 'Liderlik Tablosu' },
-  { to: '/complexes', label: 'Sitem', permission: Permissions.Complexes.Create },
+  { to: '/complexes', label: 'Sitem', permission: Permissions.Complexes.Update },
   { to: '/buildings', label: 'Bloklar & Daireler', permission: Permissions.Buildings.Create },
   { to: '/expenses', label: 'Giderler' },
   { to: '/issues', label: 'Arızalar' },

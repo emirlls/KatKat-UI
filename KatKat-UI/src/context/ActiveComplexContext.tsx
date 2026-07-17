@@ -5,9 +5,11 @@ import { useAuth } from '../hooks/useAuth';
 interface ActiveComplexContextValue {
   activeComplexId: string | null;
   activeComplexName: string | null;
+  /** The caller's own site's city id - lets the "Genel" leaderboard scope itself without a second fetch. */
+  activeComplexCityId: number | null;
   loading: boolean;
   /** Updates the cached "my complex" info - called after creating/editing it, no picking involved. */
-  setActiveComplex: (complexId: string | null, complexName?: string | null) => void;
+  setActiveComplex: (complexId: string | null, complexName?: string | null, cityId?: number | null) => void;
 }
 
 const ActiveComplexContext = createContext<ActiveComplexContextValue | null>(null);
@@ -22,12 +24,14 @@ export function ActiveComplexProvider({ children }: { children: ReactNode }) {
   const { isAuthenticated } = useAuth();
   const [activeComplexId, setActiveComplexId] = useState<string | null>(null);
   const [activeComplexName, setActiveComplexName] = useState<string | null>(null);
+  const [activeComplexCityId, setActiveComplexCityId] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!isAuthenticated) {
       setActiveComplexId(null);
       setActiveComplexName(null);
+      setActiveComplexCityId(null);
       setLoading(false);
       return;
     }
@@ -40,11 +44,13 @@ export function ActiveComplexProvider({ children }: { children: ReactNode }) {
         if (cancelled) return;
         setActiveComplexId(complex?.id ?? null);
         setActiveComplexName(complex?.name ?? null);
+        setActiveComplexCityId(complex?.city.id ?? null);
       })
       .catch(() => {
         if (!cancelled) {
           setActiveComplexId(null);
           setActiveComplexName(null);
+          setActiveComplexCityId(null);
         }
       })
       .finally(() => {
@@ -56,14 +62,15 @@ export function ActiveComplexProvider({ children }: { children: ReactNode }) {
     };
   }, [isAuthenticated]);
 
-  const setActiveComplex = useCallback((complexId: string | null, complexName?: string | null) => {
+  const setActiveComplex = useCallback((complexId: string | null, complexName?: string | null, cityId?: number | null) => {
     setActiveComplexId(complexId);
     setActiveComplexName(complexName ?? null);
+    setActiveComplexCityId(cityId ?? null);
   }, []);
 
   const value = useMemo(
-    () => ({ activeComplexId, activeComplexName, loading, setActiveComplex }),
-    [activeComplexId, activeComplexName, loading, setActiveComplex],
+    () => ({ activeComplexId, activeComplexName, activeComplexCityId, loading, setActiveComplex }),
+    [activeComplexId, activeComplexName, activeComplexCityId, loading, setActiveComplex],
   );
 
   return <ActiveComplexContext.Provider value={value}>{children}</ActiveComplexContext.Provider>;
