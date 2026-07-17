@@ -1,4 +1,5 @@
 import type { FullAuditedEntityDto, LookupDto } from './common';
+import type { FlatMemberRole } from './enums';
 
 export interface ComplexDto extends FullAuditedEntityDto<string> {
   name: string;
@@ -10,6 +11,7 @@ export interface ComplexDto extends FullAuditedEntityDto<string> {
   longitude: number;
   subscriptionStartDate: string;
   subscriptionEndDate?: string;
+  isActive: boolean;
 }
 
 export interface CreateComplexDto {
@@ -56,4 +58,38 @@ export interface NeighborhoodLeaderboardDto {
   district: LookupDto;
   neighborhood: LookupDto;
   entries: LeaderboardDto[];
+}
+
+/** Admin-only cross-tenant view of a Complex - the same fields, plus the owning Tenant id. */
+export interface AdminComplexListItemDto {
+  complex: ComplexDto;
+  tenantId?: string;
+}
+
+/** Admin-only cross-tenant read view of a Complex's full structure, for the "Tüm Siteler" drill-down. */
+export interface AdminSiteDetailDto {
+  complex: ComplexDto;
+  tenantId?: string;
+  buildings: AdminBuildingDetailDto[];
+}
+
+export interface AdminBuildingDetailDto {
+  id: string;
+  name: string;
+  floorCount?: number;
+  flats: AdminFlatDetailDto[];
+}
+
+export interface AdminFlatDetailDto {
+  id: string;
+  flatNumber: string;
+  floorNumber?: number;
+  shareFactor: number;
+  residents: AdminResidentDto[];
+}
+
+export interface AdminResidentDto {
+  id: string;
+  userName: string;
+  role: FlatMemberRole;
 }

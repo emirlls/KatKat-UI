@@ -25,10 +25,12 @@ export const FlatMemberRoleLabels: Record<FlatMemberRole, string> = {
   3: 'Malik',
 };
 
-export type ReservationStatus = 0 | 1;
+export type ReservationStatus = 0 | 1 | 2 | 3;
 export const ReservationStatusLabels: Record<ReservationStatus, string> = {
   0: 'Onaylı',
   1: 'İptal Edildi',
+  2: 'Beklemede',
+  3: 'Reddedildi',
 };
 
 export type ResourceType = 0 | 1;

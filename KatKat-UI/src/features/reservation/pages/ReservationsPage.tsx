@@ -9,15 +9,37 @@ import { Select } from '../../../components/Select';
 import { Spinner } from '../../../components/Spinner';
 import { useActiveComplex } from '../../../context/ActiveComplexContext';
 import { useAsync } from '../../../hooks/useAsync';
+import { useAuth } from '../../../hooks/useAuth';
+import { usePermission } from '../../../hooks/usePermission';
 import { useComplexGroup, useHubEvent } from '../../../hooks/useSignalR';
 import { ApiError } from '../../../services/api';
 import { KatKatHubEvents } from '../../../services/signalr-service';
 import { ReservationStatusLabels, ResourceTypeLabels } from '../../../types/enums';
+import { Permissions } from '../../../types/permissions';
 import type { ResourceReservationDto } from '../../../types/resource';
 import { reservationService } from '../services/reservationService';
 import { resourceService } from '../services/resourceService';
 
-function ResourceReservations({ resourceId, refreshKey }: { resourceId: string; refreshKey: number }) {
+// Mirrors the backend ReservationStatus enum.
+const RESERVATION_STATUS = { Confirmed: 0, Cancelled: 1, Pending: 2, Rejected: 3 } as const;
+
+function statusTone(status: number): 'success' | 'default' | 'danger' {
+  if (status === RESERVATION_STATUS.Confirmed) return 'success';
+  if (status === RESERVATION_STATUS.Pending) return 'default';
+  return 'danger';
+}
+
+function ResourceReservations({
+  resourceId,
+  refreshKey,
+  canApprove,
+  currentUserId,
+}: {
+  resourceId: string;
+  refreshKey: number;
+  canApprove: boolean;
+  currentUserId: string | undefined;
+}) {
   const [localRefresh, setLocalRefresh] = useState(0);
   const {
     data: reservations,
@@ -42,12 +64,12 @@ function ResourceReservations({ resourceId, refreshKey }: { resourceId: string; 
     }
   }
 
-  async function handleCancel(id: string) {
+  async function runAction(action: () => Promise<unknown>) {
     try {
-      await reservationService.cancel(id);
+      await action();
       setLocalRefresh((k) => k + 1);
     } catch (err) {
-      window.alert(err instanceof ApiError ? err.message : 'İptal edilemedi.');
+      window.alert(err instanceof ApiError ? err.message : 'İşlem başarısız.');
     }
   }
 
@@ -62,13 +84,7 @@ function ResourceReservations({ resourceId, refreshKey }: { resourceId: string; 
           onChange={(e) => setStartTime(e.target.value)}
           required
         />
-        <Input
-          label="Bitiş"
-          type="datetime-local"
-          value={endTime}
-          onChange={(e) => setEndTime(e.target.value)}
-          required
-        />
+        <Input label="Bitiş" type="datetime-local" value={endTime} onChange={(e) => setEndTime(e.target.value)} required />
         <Button type="submit">Rezerve Et</Button>
       </form>
 
@@ -86,24 +102,39 @@ function ResourceReservations({ resourceId, refreshKey }: { resourceId: string; 
             </tr>
           </thead>
           <tbody>
-            {reservations.map((reservation: ResourceReservationDto) => (
-              <tr key={reservation.id}>
-                <td>{new Date(reservation.startTime).toLocaleString('tr-TR')}</td>
-                <td>{new Date(reservation.endTime).toLocaleString('tr-TR')}</td>
-                <td>
-                  <Badge tone={reservation.status === 0 ? 'success' : 'danger'}>
-                    {ReservationStatusLabels[reservation.status]}
-                  </Badge>
-                </td>
-                <td>
-                  {reservation.status === 0 && (
-                    <Button size="sm" variant="danger" onClick={() => handleCancel(reservation.id)}>
-                      İptal Et
-                    </Button>
-                  )}
-                </td>
-              </tr>
-            ))}
+            {reservations.map((reservation: ResourceReservationDto) => {
+              const isOwner = currentUserId != null && reservation.reservedByUserId === currentUserId;
+              const isPending = reservation.status === RESERVATION_STATUS.Pending;
+              const isConfirmed = reservation.status === RESERVATION_STATUS.Confirmed;
+              return (
+                <tr key={reservation.id}>
+                  <td>{new Date(reservation.startTime).toLocaleString('tr-TR')}</td>
+                  <td>{new Date(reservation.endTime).toLocaleString('tr-TR')}</td>
+                  <td>
+                    <Badge tone={statusTone(reservation.status)}>{ReservationStatusLabels[reservation.status]}</Badge>
+                  </td>
+                  <td>
+                    <div className="row">
+                      {canApprove && isPending && (
+                        <>
+                          <Button size="sm" variant="secondary" onClick={() => runAction(() => reservationService.approve(reservation.id))}>
+                            Onayla
+                          </Button>
+                          <Button size="sm" variant="danger" onClick={() => runAction(() => reservationService.reject(reservation.id))}>
+                            Reddet
+                          </Button>
+                        </>
+                      )}
+                      {isOwner && (isPending || isConfirmed) && (
+                        <Button size="sm" variant="danger" onClick={() => runAction(() => reservationService.cancel(reservation.id))}>
+                          İptal Et
+                        </Button>
+                      )}
+                    </div>
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       )}
@@ -113,12 +144,18 @@ function ResourceReservations({ resourceId, refreshKey }: { resourceId: string; 
 
 export function ReservationsPage() {
   const { activeComplexId } = useActiveComplex();
+  const { user } = useAuth();
+  const { hasPermission } = usePermission();
+  const canManageResources = hasPermission(Permissions.Resources.Create);
+  const canApprove = hasPermission(Permissions.ResourceReservations.Approve);
   const [refreshKey, setRefreshKey] = useState(0);
   const [expandedResourceId, setExpandedResourceId] = useState<string | null>(null);
   useComplexGroup(activeComplexId ?? undefined);
   const bump = useCallback(() => setRefreshKey((k) => k + 1), []);
   useHubEvent(KatKatHubEvents.ResourceReservationCreated, bump);
   useHubEvent(KatKatHubEvents.ResourceReservationCancelled, bump);
+  useHubEvent(KatKatHubEvents.ResourceReservationApproved, bump);
+  useHubEvent(KatKatHubEvents.ResourceReservationRejected, bump);
 
   const {
     data: resources,
@@ -149,7 +186,7 @@ export function ReservationsPage() {
   if (!activeComplexId) {
     return (
       <div className="page">
-        <EmptyState message="Önce Siteler sayfasından bir site seçin." />
+        <EmptyState message="Bu hesaba bağlı bir site bulunamadı." />
       </div>
     );
   }
@@ -160,18 +197,20 @@ export function ReservationsPage() {
         <h1>Otopark &amp; Ortak Alan Rezervasyonları</h1>
       </div>
 
-      <Card className="stack">
-        <h2>Yeni Kaynak Ekle</h2>
-        <form className="row" onSubmit={handleCreateResource}>
-          {createError && <ErrorBanner message={createError} />}
-          <Input placeholder="Kaynak adı (örn. Misafir Otoparkı 3)" value={name} onChange={(e) => setName(e.target.value)} required />
-          <Select value={type} onChange={(e) => setType(e.target.value)}>
-            <option value="0">{ResourceTypeLabels[0]}</option>
-            <option value="1">{ResourceTypeLabels[1]}</option>
-          </Select>
-          <Button type="submit">Ekle</Button>
-        </form>
-      </Card>
+      {canManageResources && (
+        <Card className="stack">
+          <h2>Yeni Kaynak Ekle</h2>
+          <form className="row" onSubmit={handleCreateResource}>
+            {createError && <ErrorBanner message={createError} />}
+            <Input placeholder="Kaynak adı (örn. Misafir Otoparkı 3)" value={name} onChange={(e) => setName(e.target.value)} required />
+            <Select value={type} onChange={(e) => setType(e.target.value)}>
+              <option value="0">{ResourceTypeLabels[0]}</option>
+              <option value="1">{ResourceTypeLabels[1]}</option>
+            </Select>
+            <Button type="submit">Ekle</Button>
+          </form>
+        </Card>
+      )}
 
       {loading && <Spinner />}
       {error && <ErrorBanner message={error} />}
@@ -192,7 +231,12 @@ export function ReservationsPage() {
               </Button>
             </div>
             {expandedResourceId === resource.id && (
-              <ResourceReservations resourceId={resource.id} refreshKey={refreshKey} />
+              <ResourceReservations
+                resourceId={resource.id}
+                refreshKey={refreshKey}
+                canApprove={canApprove}
+                currentUserId={user?.id}
+              />
             )}
           </Card>
         ))}

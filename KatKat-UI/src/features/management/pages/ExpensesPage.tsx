@@ -10,8 +10,10 @@ import { Spinner } from '../../../components/Spinner';
 import { Textarea } from '../../../components/Textarea';
 import { useActiveComplex } from '../../../context/ActiveComplexContext';
 import { useAsync } from '../../../hooks/useAsync';
+import { usePermission } from '../../../hooks/usePermission';
 import { ApiError } from '../../../services/api';
 import { ExpenseDistributionModeLabels } from '../../../types/enums';
+import { Permissions } from '../../../types/permissions';
 import { expenseService } from '../services/expenseService';
 
 function ExpenseShares({ expenseId }: { expenseId: string }) {
@@ -68,6 +70,8 @@ function ExpenseShares({ expenseId }: { expenseId: string }) {
 
 export function ExpensesPage() {
   const { activeComplexId } = useActiveComplex();
+  const { hasPermission } = usePermission();
+  const canManageExpenses = hasPermission(Permissions.Expenses.Create);
   const [refreshKey, setRefreshKey] = useState(0);
   const [expandedExpenseId, setExpandedExpenseId] = useState<string | null>(null);
 
@@ -123,6 +127,7 @@ export function ExpensesPage() {
         <h1>Giderler</h1>
       </div>
 
+      {canManageExpenses && (
       <Card className="stack">
         <h2>Yeni Gider Ekle</h2>
         <form className="stack" onSubmit={handleCreate}>
@@ -163,6 +168,7 @@ export function ExpensesPage() {
           </div>
         </form>
       </Card>
+      )}
 
       {loading && <Spinner />}
       {error && <ErrorBanner message={error} />}

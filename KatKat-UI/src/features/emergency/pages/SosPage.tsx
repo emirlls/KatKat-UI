@@ -8,15 +8,19 @@ import { Select } from '../../../components/Select';
 import { Spinner } from '../../../components/Spinner';
 import { useActiveComplex } from '../../../context/ActiveComplexContext';
 import { useAsync } from '../../../hooks/useAsync';
+import { usePermission } from '../../../hooks/usePermission';
 import { useComplexGroup, useHubEvent } from '../../../hooks/useSignalR';
 import { ApiError } from '../../../services/api';
 import { KatKatHubEvents } from '../../../services/signalr-service';
 import { SosStatusLabels } from '../../../types/enums';
+import { Permissions } from '../../../types/permissions';
 import { flatService } from '../../management/services/flatService';
 import { sosAlertService } from '../services/sosAlertService';
 
 export function SosPage() {
   const { activeComplexId } = useActiveComplex();
+  const { hasPermission } = usePermission();
+  const canMarkHelpArrived = hasPermission(Permissions.SosAlerts.Resolve);
   const [refreshKey, setRefreshKey] = useState(0);
   const [reportError, setReportError] = useState<string | null>(null);
 
@@ -133,7 +137,7 @@ export function SosPage() {
                     {isResolved ? 'Yardım Ulaştı' : SosStatusLabels[alert.status]}
                   </Badge>
                 </div>
-                {alert.status === 1 && !isResolved && (
+                {canMarkHelpArrived && alert.status === 1 && !isResolved && (
                   <Button size="sm" variant="secondary" onClick={() => handleResolve(alert.id)}>
                     Yardım Ulaştı
                   </Button>

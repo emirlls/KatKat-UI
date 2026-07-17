@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 import { Select } from '../../../components/Select';
 import { useAsync } from '../../../hooks/useAsync';
+import { locationService } from '../../management/services/locationService';
 import type { DistrictDto, NeighborhoodDto } from '../../../types/location';
-import { locationService } from '../services/locationService';
 
 export interface LocationFilterValue {
   cityId: number | null;
@@ -10,13 +10,16 @@ export interface LocationFilterValue {
   neighborhoodId: number | null;
 }
 
-interface LocationSearchFilterProps {
+interface LocationFilterProps {
   value: LocationFilterValue;
   onChange: (value: LocationFilterValue) => void;
 }
 
-/** Unlike NeighborhoodPicker (used for Complex creation), every level here is optional - used to filter a search. */
-export function LocationSearchFilter({ value, onChange }: LocationSearchFilterProps) {
+/**
+ * Independent, all-optional City/District/Neighborhood filter (each level offers "Tümü" - unlike
+ * NeighborhoodPicker, which requires drilling all the way down to a single neighborhood).
+ */
+export function LocationFilter({ value, onChange }: LocationFilterProps) {
   const [districts, setDistricts] = useState<DistrictDto[]>([]);
   const [neighborhoods, setNeighborhoods] = useState<NeighborhoodDto[]>([]);
 
@@ -27,7 +30,21 @@ export function LocationSearchFilter({ value, onChange }: LocationSearchFilterPr
       setDistricts([]);
       return;
     }
-    locationService.getDistrictsByCity(value.cityId).then(setDistricts).catch(() => setDistricts([]));
+    // Ignore this fetch's result if the user has already moved on to a different city by the
+    // time it resolves - otherwise a slow response for an earlier selection can land after a
+    // faster one and clobber the correct list with stale data.
+    let stale = false;
+    locationService
+      .getDistrictsByCity(value.cityId)
+      .then((result) => {
+        if (!stale) setDistricts(result);
+      })
+      .catch(() => {
+        if (!stale) setDistricts([]);
+      });
+    return () => {
+      stale = true;
+    };
   }, [value.cityId]);
 
   useEffect(() => {
@@ -35,7 +52,18 @@ export function LocationSearchFilter({ value, onChange }: LocationSearchFilterPr
       setNeighborhoods([]);
       return;
     }
-    locationService.getNeighborhoodsByDistrict(value.districtId).then(setNeighborhoods).catch(() => setNeighborhoods([]));
+    let stale = false;
+    locationService
+      .getNeighborhoodsByDistrict(value.districtId)
+      .then((result) => {
+        if (!stale) setNeighborhoods(result);
+      })
+      .catch(() => {
+        if (!stale) setNeighborhoods([]);
+      });
+    return () => {
+      stale = true;
+    };
   }, [value.districtId]);
 
   return (

@@ -71,6 +71,31 @@
   border-color: var(--accent);
 }
 
+/* Password field with a show/hide toggle: the input keeps its full width, the eye button is
+   overlaid on the right and the input gets extra right padding so text never runs under it. */
+.input-wrapper {
+  position: relative;
+}
+.input-with-toggle {
+  padding-right: 38px;
+}
+.input-toggle {
+  position: absolute;
+  top: 0;
+  right: 0;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  padding: 0 10px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-muted);
+}
+.input-toggle:hover {
+  color: var(--text);
+}
+
 .card {
   background: var(--surface);
   border: 1px solid var(--border);

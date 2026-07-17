@@ -69,7 +69,7 @@ export const api = {
     unwrap<T>((await httpClient.get<ApiEnvelope<T>>(url, { params })).data),
   post: async <T>(url: string, body?: unknown): Promise<T> =>
     unwrap<T>((await httpClient.post<ApiEnvelope<T>>(url, body)).data),
-  put: async <T>(url: string, body?: unknown): Promise<T> =>
-    unwrap<T>((await httpClient.put<ApiEnvelope<T>>(url, body)).data),
+  put: async <T>(url: string, body?: unknown, params?: Record<string, unknown>): Promise<T> =>
+    unwrap<T>((await httpClient.put<ApiEnvelope<T>>(url, body, { params })).data),
   delete: async <T>(url: string): Promise<T> => unwrap<T>((await httpClient.delete<ApiEnvelope<T>>(url)).data),
 };

@@ -48,3 +48,9 @@ export interface FlatMemberDto extends FullAuditedEntityDto<string> {
 export interface InviteFlatMemberDto {
   flatId: string;
 }
+
+export interface UpdateResidentInfoDto {
+  userName: string;
+  email: string;
+  phoneNumber: string;
+}

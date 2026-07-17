@@ -6,21 +6,38 @@ import { getValidAccessToken } from './authService';
 export const KatKatHubEvents = {
   P2PRequestCreated: 'ReceiveP2PRequestCreated',
   P2PRequestFulfilled: 'ReceiveP2PRequestFulfilled',
+  P2PRequestCancelled: 'ReceiveP2PRequestCancelled',
   ResourceReservationCreated: 'ReceiveResourceReservationCreated',
   ResourceReservationCancelled: 'ReceiveResourceReservationCancelled',
+  ResourceReservationApproved: 'ReceiveResourceReservationApproved',
+  ResourceReservationRejected: 'ReceiveResourceReservationRejected',
   SosAlert: 'ReceiveSosAlert',
   SosAlertResolved: 'ReceiveSosAlertResolved',
+  IssueCreated: 'ReceiveIssueCreated',
+  IssueInProgress: 'ReceiveIssueInProgress',
   IssueResolved: 'ReceiveIssueResolved',
 } as const;
 
 let connection: signalR.HubConnection | null = null;
 let startPromise: Promise<void> | null = null;
+// Groups this connection has joined. withAutomaticReconnect() gives a fresh connection id on
+// reconnect and silently drops group membership, so we re-join everything on reconnected -
+// otherwise complex-group events (SOS, reservations, issues) stop arriving after a network blip.
+const joinedComplexGroups = new Set<string>();
 
 function getConnection(): signalR.HubConnection {
-  connection ??= new signalR.HubConnectionBuilder()
-    .withUrl(appConfig.signalrHubUrl, { accessTokenFactory: () => getValidAccessToken() ?? '' })
-    .withAutomaticReconnect()
-    .build();
+  if (connection === null) {
+    connection = new signalR.HubConnectionBuilder()
+      .withUrl(appConfig.signalrHubUrl, { accessTokenFactory: () => getValidAccessToken() ?? '' })
+      .withAutomaticReconnect()
+      .build();
+
+    connection.onreconnected(() => {
+      for (const complexId of joinedComplexGroups) {
+        void connection?.invoke('JoinComplexGroupAsync', complexId);
+      }
+    });
+  }
   return connection;
 }
 
@@ -36,11 +53,13 @@ export async function ensureConnected(): Promise<signalR.HubConnection> {
 }
 
 export async function joinComplexGroup(complexId: string): Promise<void> {
+  joinedComplexGroups.add(complexId);
   const hub = await ensureConnected();
   await hub.invoke('JoinComplexGroupAsync', complexId);
 }
 
 export async function leaveComplexGroup(complexId: string): Promise<void> {
+  joinedComplexGroups.delete(complexId);
   if (connection?.state === signalR.HubConnectionState.Connected) {
     await connection.invoke('LeaveComplexGroupAsync', complexId);
   }
