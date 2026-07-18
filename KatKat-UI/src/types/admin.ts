@@ -1,3 +1,4 @@
+import type { CreateComplexDto } from './complex';
 import type { LookupDto } from './common';
 
 export interface CreateManagerDto {
@@ -5,6 +6,8 @@ export interface CreateManagerDto {
   email: string;
   phoneNumber: string;
   password: string;
+  /** The site created for this Manager, inside their new Tenant - a Manager never creates their own. */
+  site: CreateComplexDto;
 }
 
 export interface UpdateManagerDto {

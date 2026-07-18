@@ -7,15 +7,29 @@ import { ErrorBanner } from '../../../components/ErrorBanner';
 import { Input } from '../../../components/Input';
 import { Spinner } from '../../../components/Spinner';
 import { useAsync } from '../../../hooks/useAsync';
-import { useDebouncedValue } from '../../../hooks/useDebouncedValue';
 import { ApiError } from '../../../services/api';
 import type { ManagerListItemDto, UpdateManagerDto } from '../../../types/admin';
-import { LocationFilter, type LocationFilterValue } from '../components/LocationFilter';
+import { NeighborhoodPicker } from '../../management/components/NeighborhoodPicker';
+import { LocationFilter } from '../components/LocationFilter';
+import { useNameAndLocationFilters } from '../hooks/useNameAndLocationFilters';
 import { managerService } from '../services/managerService';
 
-const EMPTY_LOCATION_FILTER: LocationFilterValue = { cityId: null, districtId: null, neighborhoodId: null };
 const EMPTY_EDIT_FORM: UpdateManagerDto = { userName: '', email: '', phoneNumber: '' };
-const SEARCH_DEBOUNCE_MS = 400;
+
+function createEmptyForm() {
+  return {
+    userName: '',
+    email: '',
+    phoneNumber: '',
+    password: '',
+    siteName: '',
+    siteNeighborhoodId: null as number | null,
+    siteAddress: '',
+    siteLatitude: '',
+    siteLongitude: '',
+    siteSubscriptionStartDate: new Date().toISOString().slice(0, 10),
+  };
+}
 
 function ManagerRow({ manager, onSaved }: { manager: ManagerListItemDto; onSaved: () => void }) {
   const [isEditing, setIsEditing] = useState(false);
@@ -148,15 +162,14 @@ function ManagerRow({ manager, onSaved }: { manager: ManagerListItemDto; onSaved
 }
 
 export function ManagersPage() {
-  const [form, setForm] = useState({ userName: '', email: '', phoneNumber: '', password: '' });
+  const [form, setForm] = useState(createEmptyForm);
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [isCreating, setIsCreating] = useState(false);
 
-  const [nameFilter, setNameFilter] = useState('');
-  const debouncedNameFilter = useDebouncedValue(nameFilter, SEARCH_DEBOUNCE_MS);
-  const [locationFilter, setLocationFilter] = useState<LocationFilterValue>(EMPTY_LOCATION_FILTER);
   const [refreshKey, setRefreshKey] = useState(0);
+  const { nameFilter, debouncedNameFilter, locationFilter, setNameFilter, setLocationFilter, resetFilters } =
+    useNameAndLocationFilters();
 
   const {
     data: managers,
@@ -173,20 +186,32 @@ export function ManagersPage() {
     [locationFilter.cityId, locationFilter.districtId, locationFilter.neighborhoodId, debouncedNameFilter, refreshKey],
   );
 
-  function handleResetFilter() {
-    setNameFilter('');
-    setLocationFilter(EMPTY_LOCATION_FILTER);
-  }
-
   async function handleCreate(event: FormEvent) {
     event.preventDefault();
     setError(null);
     setMessage(null);
+    if (!form.siteNeighborhoodId) {
+      setError('Lütfen sitenin il / ilçe / mahallesini seçin.');
+      return;
+    }
     setIsCreating(true);
     try {
-      await managerService.create(form);
-      setMessage(`"${form.userName}" yönetici hesabı oluşturuldu.`);
-      setForm({ userName: '', email: '', phoneNumber: '', password: '' });
+      await managerService.create({
+        userName: form.userName,
+        email: form.email,
+        phoneNumber: form.phoneNumber,
+        password: form.password,
+        site: {
+          name: form.siteName,
+          neighborhoodId: form.siteNeighborhoodId,
+          address: form.siteAddress || undefined,
+          latitude: Number(form.siteLatitude),
+          longitude: Number(form.siteLongitude),
+          subscriptionStartDate: form.siteSubscriptionStartDate,
+        },
+      });
+      setMessage(`"${form.userName}" yönetici hesabı ve sitesi oluşturuldu.`);
+      setForm(createEmptyForm());
       setRefreshKey((k) => k + 1);
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Yönetici oluşturulamadı.');
@@ -203,7 +228,10 @@ export function ManagersPage() {
 
       <Card className="stack">
         <h2>Yeni Yönetici Ekle</h2>
-        <p>Her yönetici kendi sitesini yönetir; siteleri ve daireleri diğer yöneticilerden tamamen ayrıdır.</p>
+        <p>
+          Bir yönetici, sitesiyle birlikte oluşturulur; siteler ve daireler diğer yöneticilerden tamamen ayrıdır.
+          Yönetici kendi sitesini oluşturamaz - sitesi burada, hesabıyla birlikte oluşturulur.
+        </p>
         <form className="stack" onSubmit={handleCreate}>
           {error && <ErrorBanner message={error} />}
           {message && <p>{message}</p>}
@@ -234,9 +262,52 @@ export function ManagersPage() {
             onChange={(e) => setForm({ ...form, password: e.target.value })}
             required
           />
+
+          <h3>Site Bilgileri</h3>
+          <Input
+            label="Site Adı"
+            value={form.siteName}
+            onChange={(e) => setForm({ ...form, siteName: e.target.value })}
+            required
+          />
+          <NeighborhoodPicker
+            neighborhoodId={form.siteNeighborhoodId}
+            onChange={(siteNeighborhoodId) => setForm({ ...form, siteNeighborhoodId })}
+          />
+          <Input
+            label="Adres"
+            value={form.siteAddress}
+            onChange={(e) => setForm({ ...form, siteAddress: e.target.value })}
+          />
+          <div className="row">
+            <Input
+              label="Enlem (Latitude)"
+              type="number"
+              step="any"
+              value={form.siteLatitude}
+              onChange={(e) => setForm({ ...form, siteLatitude: e.target.value })}
+              required
+            />
+            <Input
+              label="Boylam (Longitude)"
+              type="number"
+              step="any"
+              value={form.siteLongitude}
+              onChange={(e) => setForm({ ...form, siteLongitude: e.target.value })}
+              required
+            />
+          </div>
+          <Input
+            label="Abonelik Başlangıç Tarihi"
+            type="date"
+            value={form.siteSubscriptionStartDate}
+            onChange={(e) => setForm({ ...form, siteSubscriptionStartDate: e.target.value })}
+            required
+          />
+
           <div>
             <Button type="submit" disabled={isCreating}>
-              {isCreating ? 'Oluşturuluyor…' : 'Yönetici Oluştur'}
+              {isCreating ? 'Oluşturuluyor…' : 'Yönetici ve Site Oluştur'}
             </Button>
           </div>
         </form>
@@ -246,7 +317,7 @@ export function ManagersPage() {
         <h2>Yöneticiler</h2>
         <div className="row">
           <Input placeholder="İsim veya e-posta ara" value={nameFilter} onChange={(e) => setNameFilter(e.target.value)} />
-          <Button size="sm" variant="secondary" onClick={handleResetFilter}>
+          <Button size="sm" variant="secondary" onClick={resetFilters}>
             Filtreyi Sıfırla
           </Button>
         </div>

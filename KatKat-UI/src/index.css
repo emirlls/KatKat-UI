@@ -1,3 +1,9 @@
+/*
+ * Theming is driven by a `data-theme="light"|"dark"` attribute on <html>, set once at load by
+ * ThemeContext (localStorage choice, falling back to the OS's prefers-color-scheme the very
+ * first time) and toggleable by anyone regardless of role - a Manager and a Resident get the
+ * exact same two options and the exact same variables, never a role-specific palette.
+ */
 :root {
   --text: #3f3d45;
   --text-h: #08060d;
@@ -17,7 +23,7 @@
   --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
 
   font: 15px/1.5 var(--sans);
-  color-scheme: light dark;
+  color-scheme: light;
   color: var(--text);
   background: var(--bg);
   font-synthesis: none;
@@ -26,8 +32,9 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* OS-default dark mode, only until the user makes an explicit in-app choice. */
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme]) {
     --text: #d1d0d4;
     --text-h: #f3f4f6;
     --text-muted: #9ca3af;
@@ -42,7 +49,27 @@
     --success: #4ade80;
     --success-bg: rgba(74, 222, 128, 0.15);
     --shadow: rgba(0, 0, 0, 0.4) 0 1px 3px, rgba(0, 0, 0, 0.3) 0 1px 2px;
+    color-scheme: dark;
   }
+}
+
+/* Explicit in-app choice - always wins over the OS setting. */
+:root[data-theme='dark'] {
+  --text: #d1d0d4;
+  --text-h: #f3f4f6;
+  --text-muted: #9ca3af;
+  --bg: #101116;
+  --surface: #181920;
+  --border: #2e303a;
+  --accent: #a78bfa;
+  --accent-hover: #c4b5fd;
+  --accent-bg: rgba(167, 139, 250, 0.15);
+  --danger: #f87171;
+  --danger-bg: rgba(248, 113, 113, 0.15);
+  --success: #4ade80;
+  --success-bg: rgba(74, 222, 128, 0.15);
+  --shadow: rgba(0, 0, 0, 0.4) 0 1px 3px, rgba(0, 0, 0, 0.3) 0 1px 2px;
+  color-scheme: dark;
 }
 
 * {

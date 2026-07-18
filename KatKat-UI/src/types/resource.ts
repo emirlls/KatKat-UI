@@ -19,10 +19,15 @@ export interface ResourceReservationDto extends FullAuditedEntityDto<string> {
   startTime: string;
   endTime: string;
   status: ReservationStatus;
+  rejectionReason?: string;
 }
 
 export interface CreateResourceReservationDto {
   resourceId: string;
   startTime: string;
   endTime: string;
+}
+
+export interface RejectResourceReservationDto {
+  reason: string;
 }

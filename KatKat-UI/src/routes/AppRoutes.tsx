@@ -32,7 +32,7 @@ export function AppRoutes() {
           <Route path="/" element={<DashboardPage />} />
           <Route path="/leaderboard" element={<LeaderboardPage />} />
           {/* Site management is manager-only; a resident deep-linking these is redirected home. */}
-          <Route element={<PermissionRoute permission={Permissions.Complexes.Create} />}>
+          <Route element={<PermissionRoute permission={Permissions.Complexes.Update} />}>
             <Route path="/complexes" element={<ComplexPage />} />
           </Route>
           <Route element={<PermissionRoute permission={Permissions.Buildings.Create} />}>

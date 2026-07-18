@@ -6,7 +6,6 @@
  */
 export const Permissions = {
   Complexes: {
-    Create: 'KatKat.Complexes.Create',
     Update: 'KatKat.Complexes.Update',
     Delete: 'KatKat.Complexes.Delete',
   },

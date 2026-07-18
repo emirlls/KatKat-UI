@@ -8,17 +8,14 @@ import { Input } from '../../../components/Input';
 import { Modal } from '../../../components/Modal';
 import { Spinner } from '../../../components/Spinner';
 import { useAsync } from '../../../hooks/useAsync';
-import { useDebouncedValue } from '../../../hooks/useDebouncedValue';
 import { ApiError } from '../../../services/api';
 import type { AdminComplexListItemDto } from '../../../types/complex';
 import { FlatMemberRoleLabels } from '../../../types/enums';
 import { NeighborhoodPicker } from '../../management/components/NeighborhoodPicker';
 import { complexService } from '../../management/services/complexService';
 import { complexFormFromDto } from '../../management/utils/complexForm';
-import { LocationFilter, type LocationFilterValue } from '../components/LocationFilter';
-
-const EMPTY_LOCATION_FILTER: LocationFilterValue = { cityId: null, districtId: null, neighborhoodId: null };
-const SEARCH_DEBOUNCE_MS = 400;
+import { LocationFilter } from '../components/LocationFilter';
+import { useNameAndLocationFilters } from '../hooks/useNameAndLocationFilters';
 
 function SiteDetailModal({ complexId, onClose }: { complexId: string; onClose: () => void }) {
   const {
@@ -238,11 +235,10 @@ function SiteRow({
 }
 
 export function AllSitesPage() {
-  const [nameFilter, setNameFilter] = useState('');
-  const debouncedNameFilter = useDebouncedValue(nameFilter, SEARCH_DEBOUNCE_MS);
-  const [locationFilter, setLocationFilter] = useState<LocationFilterValue>(EMPTY_LOCATION_FILTER);
   const [refreshKey, setRefreshKey] = useState(0);
   const [selectedSiteId, setSelectedSiteId] = useState<string | null>(null);
+  const { nameFilter, debouncedNameFilter, locationFilter, setNameFilter, setLocationFilter, resetFilters } =
+    useNameAndLocationFilters();
 
   const {
     data: sites,
@@ -258,11 +254,6 @@ export function AllSitesPage() {
       }),
     [locationFilter.cityId, locationFilter.districtId, locationFilter.neighborhoodId, debouncedNameFilter, refreshKey],
   );
-
-  function resetFilters() {
-    setNameFilter('');
-    setLocationFilter(EMPTY_LOCATION_FILTER);
-  }
 
   return (
     <div className="page stack">

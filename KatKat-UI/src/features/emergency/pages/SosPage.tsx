@@ -7,6 +7,7 @@ import { ErrorBanner } from '../../../components/ErrorBanner';
 import { Select } from '../../../components/Select';
 import { Spinner } from '../../../components/Spinner';
 import { useActiveComplex } from '../../../context/ActiveComplexContext';
+import { useToast } from '../../../context/ToastContext';
 import { useAsync } from '../../../hooks/useAsync';
 import { usePermission } from '../../../hooks/usePermission';
 import { useComplexGroup, useHubEvent } from '../../../hooks/useSignalR';
@@ -20,6 +21,7 @@ import { sosAlertService } from '../services/sosAlertService';
 export function SosPage() {
   const { activeComplexId } = useActiveComplex();
   const { hasPermission } = usePermission();
+  const { showToast } = useToast();
   const canMarkHelpArrived = hasPermission(Permissions.SosAlerts.Resolve);
   const [refreshKey, setRefreshKey] = useState(0);
   const [reportError, setReportError] = useState<string | null>(null);
@@ -67,6 +69,7 @@ export function SosPage() {
     try {
       await sosAlertService.resolve(id);
       bump();
+      showToast('Sakinin durumu "yardım ulaştı" olarak işaretlendi.', 'success');
     } catch (err) {
       window.alert(err instanceof ApiError ? err.message : 'İşlem başarısız.');
     }
@@ -127,24 +130,19 @@ export function SosPage() {
         {error && <ErrorBanner message={error} />}
         {alerts && alerts.length === 0 && <EmptyState message="Aktif bir uyarı yok." />}
         <div className="stack">
-          {alerts?.map((alert) => {
-            const isResolved = alert.resolvedAt != null;
-            return (
-              <div key={alert.id} className="row page-header">
-                <div>
-                  <span>Daire: {alert.flatNumber}</span>{' '}
-                  <Badge tone={isResolved ? 'success' : alert.status === 1 ? 'danger' : 'success'}>
-                    {isResolved ? 'Yardım Ulaştı' : SosStatusLabels[alert.status]}
-                  </Badge>
-                </div>
-                {canMarkHelpArrived && alert.status === 1 && !isResolved && (
-                  <Button size="sm" variant="secondary" onClick={() => handleResolve(alert.id)}>
-                    Yardım Ulaştı
-                  </Button>
-                )}
+          {alerts?.map((alert) => (
+            <div key={alert.id} className="row page-header">
+              <div>
+                <span>Daire: {alert.flatNumber}</span>{' '}
+                <Badge tone={alert.status === 1 ? 'danger' : 'success'}>{SosStatusLabels[alert.status]}</Badge>
               </div>
-            );
-          })}
+              {canMarkHelpArrived && alert.status === 1 && (
+                <Button size="sm" variant="secondary" onClick={() => handleResolve(alert.id)}>
+                  Yardım Ulaştı
+                </Button>
+              )}
+            </div>
+          ))}
         </div>
       </Card>
     </div>

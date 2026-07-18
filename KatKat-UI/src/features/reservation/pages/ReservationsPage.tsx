@@ -73,6 +73,12 @@ function ResourceReservations({
     }
   }
 
+  function handleReject(reservationId: string) {
+    const reason = window.prompt('Reddetme sebebini yazın:');
+    if (!reason) return;
+    void runAction(() => reservationService.reject(reservationId, { reason }));
+  }
+
   return (
     <div className="stack">
       <form className="row" onSubmit={handleCreate}>
@@ -112,6 +118,11 @@ function ResourceReservations({
                   <td>{new Date(reservation.endTime).toLocaleString('tr-TR')}</td>
                   <td>
                     <Badge tone={statusTone(reservation.status)}>{ReservationStatusLabels[reservation.status]}</Badge>
+                    {reservation.rejectionReason && (
+                      <div>
+                        <small>Sebep: {reservation.rejectionReason}</small>
+                      </div>
+                    )}
                   </td>
                   <td>
                     <div className="row">
@@ -120,7 +131,7 @@ function ResourceReservations({
                           <Button size="sm" variant="secondary" onClick={() => runAction(() => reservationService.approve(reservation.id))}>
                             Onayla
                           </Button>
-                          <Button size="sm" variant="danger" onClick={() => runAction(() => reservationService.reject(reservation.id))}>
+                          <Button size="sm" variant="danger" onClick={() => handleReject(reservation.id)}>
                             Reddet
                           </Button>
                         </>
