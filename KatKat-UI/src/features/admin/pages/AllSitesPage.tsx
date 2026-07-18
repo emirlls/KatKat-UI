@@ -150,6 +150,17 @@ function SiteRow({
     }
   }
 
+  async function handleExtendSubscription() {
+    const newEndDate = window.prompt('Yeni abonelik bitiş tarihi (YYYY-AA-GG):');
+    if (!newEndDate) return;
+    try {
+      await complexService.extendSubscriptionAcrossAllTenants(site.complex.id, { newEndDate });
+      onSaved();
+    } catch (err) {
+      window.alert(err instanceof ApiError ? err.message : 'Abonelik uzatılamadı.');
+    }
+  }
+
   if (isEditing) {
     return (
       <tr>
@@ -224,6 +235,9 @@ function SiteRow({
           </Button>
           <Button size="sm" variant="secondary" onClick={handleToggleActive}>
             {site.complex.isActive ? 'Pasifleştir' : 'Aktifleştir'}
+          </Button>
+          <Button size="sm" variant="secondary" onClick={handleExtendSubscription}>
+            Aboneliği Uzat
           </Button>
           <Button size="sm" variant="danger" onClick={handleDelete}>
             Sil

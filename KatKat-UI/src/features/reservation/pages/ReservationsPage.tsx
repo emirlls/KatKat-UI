@@ -101,6 +101,7 @@ function ResourceReservations({
         <table className="table">
           <thead>
             <tr>
+              <th>Sakin</th>
               <th>Başlangıç</th>
               <th>Bitiş</th>
               <th>Durum</th>
@@ -114,6 +115,11 @@ function ResourceReservations({
               const isConfirmed = reservation.status === RESERVATION_STATUS.Confirmed;
               return (
                 <tr key={reservation.id}>
+                  <td>
+                    {reservation.buildingName && reservation.flatNumber
+                      ? `${reservation.buildingName} - Daire ${reservation.flatNumber}`
+                      : '-'}
+                  </td>
                   <td>{new Date(reservation.startTime).toLocaleString('tr-TR')}</td>
                   <td>{new Date(reservation.endTime).toLocaleString('tr-TR')}</td>
                   <td>

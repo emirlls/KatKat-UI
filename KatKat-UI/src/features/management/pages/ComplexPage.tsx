@@ -69,18 +69,6 @@ export function ComplexPage() {
     }
   }
 
-  async function handleExtendSubscription() {
-    if (!activeComplexId || !complex) return;
-    const newEndDate = window.prompt('Yeni abonelik bitiş tarihi (YYYY-AA-GG):');
-    if (!newEndDate) return;
-    try {
-      await complexService.extendSubscription(activeComplexId, { newEndDate });
-      setRefreshKey((k) => k + 1);
-    } catch (err) {
-      window.alert(err instanceof ApiError ? err.message : 'Abonelik uzatılamadı.');
-    }
-  }
-
   return (
     <div className="page stack">
       <div className="page-header">
@@ -112,19 +100,14 @@ export function ComplexPage() {
                 {complex.neighborhood.name}
               </p>
               {complex.address && <p>{complex.address}</p>}
-              <p>
-                Konum: {complex.latitude}, {complex.longitude}
-              </p>
+              <p>Blok Sayısı: {complex.buildingCount}</p>
+              <p>Daire Sayısı: {complex.flatCount}</p>
+              <p>Yönetici: {complex.managerUserName ?? '-'}</p>
               <div className="row">
                 <Badge>Abonelik başlangıcı: {complex.subscriptionStartDate.slice(0, 10)}</Badge>
                 <Badge tone={complex.subscriptionEndDate ? 'default' : 'success'}>
                   Bitiş: {complex.subscriptionEndDate ? complex.subscriptionEndDate.slice(0, 10) : 'Süresiz'}
                 </Badge>
-              </div>
-              <div>
-                <Button variant="secondary" size="sm" onClick={handleExtendSubscription}>
-                  Aboneliği Uzat
-                </Button>
               </div>
             </div>
           )}

@@ -117,6 +117,14 @@ export function P2PRequestsPage() {
           <Card key={request.id} className="page-header">
             <div>
               <strong>{request.title}</strong>
+              {request.buildingName && request.flatNumber && (
+                <>
+                  {' '}
+                  <Badge>
+                    {request.buildingName} - Daire {request.flatNumber}
+                  </Badge>
+                </>
+              )}
               {request.description && <p>{request.description}</p>}
               <Badge tone={request.status === 1 ? 'success' : request.status === 2 ? 'danger' : 'default'}>
                 {P2PRequestStatusLabels[request.status]}

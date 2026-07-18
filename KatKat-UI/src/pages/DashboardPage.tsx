@@ -14,7 +14,7 @@ interface Shortcut {
 
 const SHORTCUTS: Shortcut[] = [
   { to: '/leaderboard', title: 'Liderlik Tablosu', description: 'KatKat Score sıralamalarını ve yakın çevre haritasını gör.' },
-  { to: '/complexes', title: 'Sitem', description: 'Site bilgilerini düzenle, aboneliği uzat.', permission: Permissions.Complexes.Update },
+  { to: '/complexes', title: 'Sitem', description: 'Site bilgilerini görüntüle ve düzenle.', permission: Permissions.Complexes.Update },
   { to: '/expenses', title: 'Giderler', description: 'Ortak giderleri ve daire paylarını takip et.' },
   { to: '/issues', title: 'Arızalar', description: 'Arıza bildir, işleme al, çözüldü olarak işaretle.' },
   { to: '/p2p-requests', title: 'Komşu Talepleri', description: 'Anlık yardımlaşma taleplerini gör ve karşıla.' },

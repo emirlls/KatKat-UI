@@ -9,12 +9,9 @@ import { Input } from '../../../components/Input';
 import { Spinner } from '../../../components/Spinner';
 import { useAsync } from '../../../hooks/useAsync';
 import { ApiError } from '../../../services/api';
-import type { UpdateResidentInfoDto } from '../../../types/building';
 import { FlatMemberRoleLabels } from '../../../types/enums';
 import { flatService } from '../services/flatService';
 import { residentInvitationService } from '../services/residentInvitationService';
-
-const EMPTY_RESIDENT_INFO_FORM: UpdateResidentInfoDto = { userName: '', email: '', phoneNumber: '' };
 
 function FlatMembers({ flatId, refreshKey }: { flatId: string; refreshKey: number }) {
   const [localRefreshKey, setLocalRefreshKey] = useState(0);
@@ -23,9 +20,6 @@ function FlatMembers({ flatId, refreshKey }: { flatId: string; refreshKey: numbe
     [flatId, refreshKey, localRefreshKey],
   );
   const [actionError, setActionError] = useState<string | null>(null);
-  const [editingMemberId, setEditingMemberId] = useState<string | null>(null);
-  const [residentInfoForm, setResidentInfoForm] = useState<UpdateResidentInfoDto>(EMPTY_RESIDENT_INFO_FORM);
-  const [residentInfoError, setResidentInfoError] = useState<string | null>(null);
 
   async function runAction(action: () => Promise<unknown>) {
     setActionError(null);
@@ -42,30 +36,6 @@ function FlatMembers({ flatId, refreshKey }: { flatId: string; refreshKey: numbe
     await runAction(() => flatService.removeMember(memberId));
   }
 
-  async function startEditResidentInfo(memberId: string) {
-    setResidentInfoError(null);
-    try {
-      const info = await flatService.getResidentInfo(memberId);
-      setResidentInfoForm(info);
-      setEditingMemberId(memberId);
-    } catch (err) {
-      setActionError(err instanceof ApiError ? err.message : 'Sakin bilgisi alınamadı.');
-    }
-  }
-
-  async function handleSaveResidentInfo(event: FormEvent) {
-    event.preventDefault();
-    if (!editingMemberId) return;
-    setResidentInfoError(null);
-    try {
-      await flatService.updateResidentInfo(editingMemberId, residentInfoForm);
-      setEditingMemberId(null);
-      setLocalRefreshKey((k) => k + 1);
-    } catch (err) {
-      setResidentInfoError(err instanceof ApiError ? err.message : 'Sakin bilgisi güncellenemedi.');
-    }
-  }
-
   if (loading) return <Spinner />;
   if (error) return <ErrorBanner message={error} />;
   if (!members || members.length === 0) return <EmptyState message="Bu dairede henüz sakin yok." />;
@@ -73,42 +43,15 @@ function FlatMembers({ flatId, refreshKey }: { flatId: string; refreshKey: numbe
   return (
     <div className="stack">
       {actionError && <ErrorBanner message={actionError} />}
-      {members.map((member) =>
-        editingMemberId === member.id ? (
-          <form key={member.id} className="stack" onSubmit={handleSaveResidentInfo}>
-            {residentInfoError && <ErrorBanner message={residentInfoError} />}
-            <div className="row">
-              <Input
-                placeholder="Kullanıcı Adı"
-                value={residentInfoForm.userName}
-                onChange={(e) => setResidentInfoForm({ ...residentInfoForm, userName: e.target.value })}
-                required
-              />
-              <Input
-                placeholder="E-posta"
-                type="email"
-                value={residentInfoForm.email}
-                onChange={(e) => setResidentInfoForm({ ...residentInfoForm, email: e.target.value })}
-                required
-              />
-              <Input
-                placeholder="Telefon"
-                value={residentInfoForm.phoneNumber}
-                onChange={(e) => setResidentInfoForm({ ...residentInfoForm, phoneNumber: e.target.value })}
-                required
-              />
-            </div>
-            <div className="row">
-              <Button type="submit">Kaydet</Button>
-              <Button type="button" variant="secondary" onClick={() => setEditingMemberId(null)}>
-                Vazgeç
-              </Button>
-            </div>
-          </form>
-        ) : (
+      {members.map((member) => {
+        const fullName = [member.name, member.surname].filter(Boolean).join(' ');
+        return (
           <div key={member.id} className="row">
             <Badge>{FlatMemberRoleLabels[member.role]}</Badge>
-            <span>{member.userName}</span>
+            <span>
+              {member.userName}
+              {fullName && ` (${fullName})`}
+            </span>
             {member.role === 0 && (
               <Button size="sm" variant="secondary" onClick={() => runAction(() => flatService.approve(member.id))}>
                 Onayla
@@ -123,15 +66,12 @@ function FlatMembers({ flatId, refreshKey }: { flatId: string; refreshKey: numbe
                 Yönetici Yap
               </Button>
             )}
-            <Button size="sm" variant="secondary" onClick={() => startEditResidentInfo(member.id)}>
-              Bilgilerini Düzenle
-            </Button>
             <Button size="sm" variant="danger" onClick={() => handleRemove(member.id, member.userName)}>
               Çıkar
             </Button>
           </div>
-        ),
-      )}
+        );
+      })}
     </div>
   );
 }
