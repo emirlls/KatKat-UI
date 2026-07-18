@@ -14,6 +14,8 @@ export interface CreateResidentInvitationDto {
 export interface RedeemResidentInvitationDto {
   code: string;
   userName: string;
+  name: string;
+  surname: string;
   email: string;
   phoneNumber: string;
   password: string;

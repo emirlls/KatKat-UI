@@ -5,6 +5,7 @@ import { Card } from '../../../components/Card';
 import { EmptyState } from '../../../components/EmptyState';
 import { ErrorBanner } from '../../../components/ErrorBanner';
 import { Input } from '../../../components/Input';
+import { Select } from '../../../components/Select';
 import { Spinner } from '../../../components/Spinner';
 import { Textarea } from '../../../components/Textarea';
 import { useActiveComplex } from '../../../context/ActiveComplexContext';
@@ -15,6 +16,7 @@ import { ApiError } from '../../../services/api';
 import { KatKatHubEvents } from '../../../services/signalr-service';
 import { IssueStatusLabels } from '../../../types/enums';
 import { Permissions } from '../../../types/permissions';
+import { buildingService } from '../services/buildingService';
 import { issueService } from '../services/issueService';
 
 export function IssuesPage() {
@@ -39,8 +41,14 @@ export function IssuesPage() {
     [activeComplexId, refreshKey],
   );
 
+  const { data: buildings } = useAsync(
+    () => (activeComplexId ? buildingService.listByComplex(activeComplexId) : Promise.resolve([])),
+    [activeComplexId],
+  );
+
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
+  const [buildingId, setBuildingId] = useState('');
   const [createError, setCreateError] = useState<string | null>(null);
 
   async function handleCreate(event: FormEvent) {
@@ -48,9 +56,15 @@ export function IssuesPage() {
     if (!activeComplexId) return;
     setCreateError(null);
     try {
-      await issueService.create({ complexId: activeComplexId, title, description: description || undefined });
+      await issueService.create({
+        complexId: activeComplexId,
+        buildingId: buildingId || undefined,
+        title,
+        description: description || undefined,
+      });
       setTitle('');
       setDescription('');
+      setBuildingId('');
       setRefreshKey((k) => k + 1);
     } catch (err) {
       setCreateError(err instanceof ApiError ? err.message : 'Arıza bildirilemedi.');
@@ -95,6 +109,14 @@ export function IssuesPage() {
           {createError && <ErrorBanner message={createError} />}
           <Input label="Başlık" value={title} onChange={(e) => setTitle(e.target.value)} required />
           <Textarea label="Açıklama" value={description} onChange={(e) => setDescription(e.target.value)} />
+          <Select label="Blok (opsiyonel)" value={buildingId} onChange={(e) => setBuildingId(e.target.value)}>
+            <option value="">Genel (blok seçilmedi)</option>
+            {buildings?.map((building) => (
+              <option key={building.id} value={building.id}>
+                {building.name}
+              </option>
+            ))}
+          </Select>
           <div>
             <Button type="submit">Bildir</Button>
           </div>
@@ -109,6 +131,12 @@ export function IssuesPage() {
           <Card key={issue.id} className="page-header">
             <div>
               <strong>{issue.title}</strong>
+              {issue.buildingName && (
+                <>
+                  {' '}
+                  <Badge>{issue.buildingName}</Badge>
+                </>
+              )}
               {issue.description && <p>{issue.description}</p>}
               <Badge tone={issue.statuses === 2 ? 'success' : issue.statuses === 1 ? 'default' : 'danger'}>
                 {IssueStatusLabels[issue.statuses]}

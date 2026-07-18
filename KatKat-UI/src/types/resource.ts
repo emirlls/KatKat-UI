@@ -15,6 +15,12 @@ export interface CreateResourceDto {
 
 export interface ResourceReservationDto extends FullAuditedEntityDto<string> {
   resourceId: string;
+  flatId?: string;
+  /** Denormalized from Flat.FlatNumber - which flat the reserver lives in. */
+  flatNumber?: string;
+  buildingId?: string;
+  /** Denormalized from Building.Name - which block the reserver lives in. */
+  buildingName?: string;
   reservedByUserId: string;
   startTime: string;
   endTime: string;

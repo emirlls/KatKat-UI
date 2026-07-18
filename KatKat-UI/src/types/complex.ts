@@ -12,6 +12,10 @@ export interface ComplexDto extends FullAuditedEntityDto<string> {
   subscriptionStartDate: string;
   subscriptionEndDate?: string;
   isActive: boolean;
+  /** Only populated for a single-Complex fetch (get/getMy), not bulk search results. */
+  buildingCount: number;
+  flatCount: number;
+  managerUserName?: string;
 }
 
 export interface CreateComplexDto {

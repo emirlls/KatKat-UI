@@ -42,15 +42,13 @@ export interface FlatMemberDto extends FullAuditedEntityDto<string> {
   flatId: string;
   userId: string;
   userName: string;
+  /** Denormalized from IdentityUser.Name - the resident's real first name. */
+  name?: string;
+  /** Denormalized from IdentityUser.Surname. */
+  surname?: string;
   role: FlatMemberRole;
 }
 
 export interface InviteFlatMemberDto {
   flatId: string;
-}
-
-export interface UpdateResidentInfoDto {
-  userName: string;
-  email: string;
-  phoneNumber: string;
 }

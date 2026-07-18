@@ -5,6 +5,8 @@ export interface SosAlertDto extends FullAuditedEntityDto<string> {
   complexId: string;
   flatId: string;
   flatNumber: string;
+  /** Denormalized from Building.Name (via Flat.buildingId). */
+  buildingName: string;
   reporterUserId: string;
   status: SosStatus;
   resolvedAt?: string;

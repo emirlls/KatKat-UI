@@ -133,7 +133,9 @@ export function SosPage() {
           {alerts?.map((alert) => (
             <div key={alert.id} className="row page-header">
               <div>
-                <span>Daire: {alert.flatNumber}</span>{' '}
+                <span>
+                  {alert.buildingName} - Daire: {alert.flatNumber}
+                </span>{' '}
                 <Badge tone={alert.status === 1 ? 'danger' : 'success'}>{SosStatusLabels[alert.status]}</Badge>
               </div>
               {canMarkHelpArrived && alert.status === 1 && (

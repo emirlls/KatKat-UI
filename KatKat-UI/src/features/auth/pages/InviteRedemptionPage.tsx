@@ -12,7 +12,7 @@ export function InviteRedemptionPage() {
   const { code } = useParams<{ code: string }>();
   const { login } = useAuth();
   const navigate = useNavigate();
-  const [form, setForm] = useState({ userName: '', email: '', phoneNumber: '', password: '' });
+  const [form, setForm] = useState({ userName: '', name: '', surname: '', email: '', phoneNumber: '', password: '' });
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -45,6 +45,20 @@ export function InviteRedemptionPage() {
       <form className="stack" onSubmit={handleSubmit}>
         <h2>Daire Sakini Kaydı</h2>
         {error && <ErrorBanner message={error} />}
+        <Input
+          label="Ad"
+          value={form.name}
+          onChange={(e) => setForm({ ...form, name: e.target.value })}
+          autoComplete="given-name"
+          required
+        />
+        <Input
+          label="Soyad"
+          value={form.surname}
+          onChange={(e) => setForm({ ...form, surname: e.target.value })}
+          autoComplete="family-name"
+          required
+        />
         <Input
           label="Kullanıcı Adı"
           value={form.userName}

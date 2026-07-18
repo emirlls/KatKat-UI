@@ -30,7 +30,7 @@ export const complexService = {
   setActiveAcrossAllTenants: (id: string, isActive: boolean) =>
     api.put<ComplexDto>(`/complexes/admin/${id}/active`, undefined, { isActive }),
   getDetailAcrossAllTenants: (id: string) => api.get<AdminSiteDetailDto>(`/complexes/admin/${id}/detail`),
-  extendSubscription: (id: string, input: ExtendComplexSubscriptionDto) =>
-    api.post<ComplexDto>(`/complexes/${id}/extend-subscription`, input),
+  extendSubscriptionAcrossAllTenants: (id: string, input: ExtendComplexSubscriptionDto) =>
+    api.post<ComplexDto>(`/complexes/admin/${id}/extend-subscription`, input),
   recalculateScores: () => api.post<void>('/complexes/recalculate-scores'),
 };
