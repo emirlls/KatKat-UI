@@ -1,6 +1,7 @@
 import { NavLink, Outlet } from 'react-router-dom';
 import { Button } from '../components/Button';
 import { useActiveComplex } from '../context/ActiveComplexContext';
+import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../hooks/useAuth';
 import { usePermission } from '../hooks/usePermission';
 import { Permissions } from '../types/permissions';
@@ -37,6 +38,7 @@ export function AppLayout() {
   const { user, logout } = useAuth();
   const { hasPermission } = usePermission();
   const { activeComplexId, activeComplexName } = useActiveComplex();
+  const { theme, toggleTheme } = useTheme();
   const isAdmin = user?.roles.includes('admin') ?? false;
 
   const navItems = NAV_ITEMS.filter((item) => {
@@ -69,6 +71,9 @@ export function AppLayout() {
           )}
           <div className="row">
             <span>{user?.userName}</span>
+            <Button variant="secondary" size="sm" onClick={toggleTheme}>
+              {theme === 'light' ? 'Koyu Tema' : 'Açık Tema'}
+            </Button>
             <Button variant="secondary" size="sm" onClick={logout}>
               Çıkış Yap
             </Button>
